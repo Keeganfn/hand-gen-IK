@@ -44,9 +44,9 @@ p.changeVisualShape(hand_id, 1, rgbaColor=[0.3, 0.3, 0.3, 1])
 p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
 p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
 
-d = {"finger1": {"num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
-     "finger2": {"num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-FK = jacobian_IK.ForwardKinematicsSIM(hand_id, d)
+d = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
+     "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+FK = jacobian_IK.ForwardKinematicsSIM(hand_id, d["finger1"])
 FK.set_joint_angles([-.2, -.4])
 FK.calculate_forward_kinematics()
 p.resetJointState(hand_id, 0, -0.2)
