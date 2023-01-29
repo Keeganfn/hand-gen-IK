@@ -1,6 +1,8 @@
 import pybullet as p
 import pybullet_data
+import numpy as np
 import pathlib
+import forward_kinematics
 import jacobian_IK
 from mojograsp.simcore.sim_manager import SimManagerDefault
 from mojograsp.simcore.state import StateDefault
@@ -46,11 +48,37 @@ p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
 
 d = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
      "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-FK = jacobian_IK.ForwardKinematicsSIM(hand_id, d["finger1"])
-FK.set_joint_angles([-.2, -.4])
-FK.calculate_forward_kinematics()
-p.resetJointState(hand_id, 0, -0.2)
-p.resetJointState(hand_id, 1, -.4)
+
+
+#p.resetJointState(hand_id, 0, -0.2)
+#p.resetJointState(hand_id, 1, -.4)
+ik = jacobian_IK.JacobianIK(hand_id, d["finger1"], d["finger2"])
+# ik.calculate_jacobian_f1()
+target = np.array([0.01, .1])
+target2 = np.array([0.02, .1])
+target3 = np.array([0.02, .11])
+target_deb = np.array([0.01, .1, .05])
+debug_id_new = p.addUserDebugPoints(
+    [target_deb],
+    [[255, 0, 0]],
+    pointSize=10)
+j, angles, k = ik.calculate_ik(target)
+print(angles)
+p.resetJointState(hand_id, 0, angles[0])
+p.resetJointState(hand_id, 1, angles[1])
+j, angles, k = ik.calculate_ik(target2)
+print(angles)
+p.resetJointState(hand_id, 0, angles[0])
+p.resetJointState(hand_id, 1, angles[1])
+j, angles, k = ik.calculate_ik(target3)
+print(angles)
+p.resetJointState(hand_id, 0, angles[0])
+p.resetJointState(hand_id, 1, angles[1])
+
+
+#FK = forward_kinematics.ForwardKinematicsSIM(hand_id, d["finger1"])
+#FK.set_joint_angles([-.2, -.4])
+# FK.calculate_forward_kinematics()
 # m1 = FK.calculate_FK(angles_f1=[.1, .1])
 # m1 = FK.calculate_FK(angles_f1=[-.1, -.1])
 # #FK.calculate_FK(angles_f1=[-.1, -.1])

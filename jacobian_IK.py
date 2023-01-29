@@ -1,98 +1,142 @@
 import pybullet as p
+import forward_kinematics
 import numpy as np
 import matrix_helper as mh
 
 
-class ForwardKinematicsSIM():
-    def __init__(self, hand_id, finger_info: dict) -> None:
-        # finger information and pybullet body id
-        self.hand_id = hand_id
-        self.finger_name = finger_info["name"]
-        self.num_links = finger_info["num_links"]
-        self.link_lengths = finger_info["link_lengths"]
-        # transforms
-        self.link_translations = []
-        self.link_rotations = []
-        self.current_angles = []
-        # Current pose of each link
-        self.current_poses = []
-        self.link_ids = []
-       # Create our link id and name lists above
-        self.initialize_transforms()
-        # Holds the link names for each finger for debugging purposes
-        self.debug_id_new = None
+class JacobianIK():
 
-    def get_link_ids(self):
-        # Gets all link ids for the given finger_name, finger name must be in the link name
-        for i in range(p.getNumJoints(self.hand_id)):
-            j_info = p.getJointInfo(self.hand_id, i)
-            j_name = j_info[12].decode('UTF-8')
-            j_index = j_info[0]
-            # get all links that contain finger name, except for those with static in the name
-            if self.finger_name in j_name and "static" not in j_name:
-                self.link_ids.append(j_index)
+    def __init__(self, hand_id, finger1_info, finger2_info) -> None:
+        # Get forward IK info for each finger
+        self.finger1_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger1_info)
+        self.finger2_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger1_info)
+        self.MAX_ITERATIONS = 100
+        self.MAX_STEP = .01
+        self.STARTING_STEP = 1
+        self.ERROR = .1
 
-    def update_poses_from_sim(self):
-        # get each current link pose in global coordinates [(x,y,z), (x,y,z,w)]
-        for id in self.link_ids:
-            l_state = p.getLinkState(self.hand_id, id)
-            self.current_poses.append([list(l_state[0]), list(l_state[1])])
+        pass
 
-    def initialize_transforms(self):
-        # get initial poses from sim and link ids (MUST BE DONE IN THIS ORDER)
-        self.get_link_ids()
-        self.update_poses_from_sim()
+    def calculate_jacobian_f1(self):
+        mat_jacob = np.zeros([2, self.finger1_fk.num_links])
+        angles = self.finger1_fk.current_angles.copy()
+        link_end_locations = self.finger1_fk.link_lengths.copy()
+        angles.reverse()
+        link_end_locations.reverse()
 
-        # get the base link out first
-        base_link_t = mh.create_translation_matrix(self.current_poses[0][0])
-        base_link_r = mh.create_rotation_matrix(p.getEulerFromQuaternion(self.current_poses[0][1])[2])
-        self.link_translations.append(base_link_t)
-        self.link_rotations.append(base_link_r)
-        self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[0]))
-        # Get the transformation from previous link to next link
-        for i in range(1, len(self.current_poses)):
-            mat_t = mh.create_translation_matrix(self.current_poses[i][0])
-            mat_r = mh.create_rotation_matrix(p.getEulerFromQuaternion(self.current_poses[i][1])[2])
-            # Since poses are in the global frame we need to find the matrix that takes us from previous to next using A@B.I
-            mat_t_link = mat_t @ np.linalg.inv(self.link_translations[-1])
-            mat_r_link = mat_r @ np.linalg.inv(self.link_rotations[-1])
-            self.link_translations.append(mat_t_link)
-            self.link_rotations.append(mat_r_link)
-            self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[i]))
-        print("DEBUG F1 STARTING Transforms: ", self.link_translations, self.link_rotations)
+        # matrix of accumulated values
+        mat_accum = np.identity(3)
+        # The z vector we spin around
+        omega_hat = [0, 0, 1]
 
-    def set_joint_angles(self, angles):
-        # sets the joint angles and updates rotation matrices
-        for i in range(len(angles)):
-            mat_r = mh.create_rotation_matrix(angles[i])
-            self.link_rotations[i] = mat_r
-            self.current_angles = angles[i]
+        total_angles = sum(angles)
+        for i, (ang, length) in enumerate(zip(angles, link_end_locations)):
+            total_angles -= ang
+            mat_accum = mh.create_rotation_matrix(ang) @ mh.create_translation_matrix(length) @ mat_accum
+            mat_r = mh.create_rotation_matrix(total_angles) @ mat_accum
+            r = [mat_r[0, 2], mat_r[1, 2], 0]
+            omega_cross_r = np.cross(omega_hat, r)
+            mat_jacob[0:2, self.finger1_fk.num_links - i - 1] = np.transpose(omega_cross_r[0:2])
 
-    def calculate_forward_kinematics(self):
-        debug = []
-        link_location = np.identity(3)
-        # iterate over every link and multiply the transforms together
-        for i in range(len(self.link_lengths)):
-            link_location = link_location @ self.link_translations[i] @ self.link_rotations[i]
-            # debug adding link locations
-            debug.append(link_location @ [0, 0, 1])
-            print(f"LINK {i}: {link_location}")
-        # finally get the end effector end location
-        link_end = mh.create_translation_matrix(self.link_lengths[-1])
-        link_location = link_location @ link_end
-        # debug adding link locations
-        debug.append(link_location @ [0, 0, 1])
+        #print("JACOB: ", mat_jacob)
+        # print(angles)
+        # print(link_end_locations)
+        return mat_jacob
 
-        self.debug_show_link_positions(debug)
-        return link_location
+    def solve_jacobian_f1(self, jacobian, vx_vy):
+        """ Do the pseudo inverse of the jacobian
+        @param - jacobian - the 2xn jacobian you calculated from the current joint angles/lengths
+        @param - vx_vy - a 2x1 numpy array with the distance to the target point (vector_to_goal)
+        @return - changes to the n joint angles, as a 1xn numpy array"""
 
-    def debug_show_link_positions(self, points):
-        # temporary debug function to show links and compare
-        if self.debug_id_new:
-            p.removeUserDebugItem(self.debug_id_new)
-        for i in points:
-            i[2] = .05
-        self.debug_id_new = p.addUserDebugPoints(
-            points,
-            [[255, 0, 0]] * len(points),
-            pointSize=10)
+        res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
+        delta_angles = res[0]
+
+        return delta_angles
+
+    def vector_to_goal(self, target):
+        end_pt = self.finger1_fk.calculate_forward_kinematics()
+        return np.array(target) - np.array(end_pt[:2])
+
+    def distance_to_goal(self, target):
+        vec = self.vector_to_goal(target)
+        return np.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
+
+    def calculate_ik(self, target, b_one_step=False):
+        """
+        Use jacobian to calculate angles that move the grasp point towards target. Instead of taking 'big' steps we're
+        going to take small steps along the vector (because the Jacobian is only valid around the joint angles)
+        @param arm - The arm geometry, as constructed in arm_forward_kinematics
+        @param angles - A list of angles for each link, followed by a triplet for the wrist and fingers
+        @param target - a 2x1 numpy array (x,y) that is the desired target point
+        @param b_one_step - if True, return angles after one successful movement towards goal
+        @ return if we got better and angles that put the grasp point as close as possible to the target, and number
+                of iterations it took
+        """
+        b_keep_going = True
+        b_found_better = False
+        print("HERER", self.finger1_fk.current_angles)
+        self.finger1_fk.update_angles_from_sim()
+        print("HERERE", self.finger1_fk.current_angles)
+        angles = self.finger1_fk.current_angles.copy()
+        best_distance = self.distance_to_goal(target)
+        count_iterations = 0
+        d_step = self.MAX_STEP
+
+        while b_keep_going and count_iterations < self.MAX_ITERATIONS:
+
+            # This is the vector to the target. Take maximum 0.05 of a step towards the target
+            vec_to_target = self.vector_to_goal(target)
+            vec_length = np.linalg.norm(vec_to_target)
+            if vec_length > d_step:
+                # shorten step
+                vec_to_target *= d_step / vec_length
+            elif np.isclose(vec_length, 0.0):
+                b_keep_going = False
+
+            delta_angles = np.zeros(len(angles))
+            self.finger1_fk.set_joint_angles(angles)
+            jacobian = self.calculate_jacobian_f1()
+            delta_angles = self.solve_jacobian_f1(jacobian, vec_to_target)
+
+            # This rarely happens - but if the matrix is degenerate (the arm is in a straight line) then the angles
+            #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
+            #  just shortcuts the whole problem. There are far, far better ways to deal with this
+            avg_ang_change = np.linalg.norm(delta_angles)
+            if avg_ang_change > 100:
+                delta_angles *= 0.1 / avg_ang_change
+            elif avg_ang_change < 0.000001:
+                delta_angles *= 0.1 / avg_ang_change
+
+            b_took_one_step = False
+            # Start with a step size of 1 - take one step along the gradient
+            step_size = self.STARTING_STEP
+            # Two stopping criteria - either never got better OR one of the steps worked
+            while step_size > self.MAX_STEP and not b_took_one_step:
+                new_angles = []
+                for i, a in enumerate(angles):
+                    new_angles.append(a + step_size * delta_angles[i])
+                # Get the new distance with the new angles
+                self.finger1_fk.set_joint_angles(new_angles)
+                new_dist = self.distance_to_goal(target)
+
+                if new_dist > best_distance:
+                    step_size *= 0.5
+                else:
+                    b_took_one_step = True
+                    angles = new_angles
+                    best_distance = new_dist
+                    b_found_better = True
+                count_iterations += 1
+
+            # We can stop if we're close to the goal
+            if np.isclose(best_distance, 0.1):
+                b_keep_going = False
+
+            # End conditions - b_one_step is true  - don't do another round
+            #   OR we didn't take a step (b_took_one_step)
+            if b_one_step or not b_took_one_step:
+                b_keep_going = False
+
+        # Return the new angles, and whether or not we ever found a better set of angles
+        return b_found_better, angles, count_iterations
