@@ -1,3 +1,4 @@
+import time
 import pybullet as p
 import pybullet_data
 import numpy as np
@@ -15,6 +16,7 @@ from mojograsp.simobjects.object_base import ObjectBase
 # resource paths
 current_path = str(pathlib.Path().resolve())
 hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
+#hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
 cube_path = current_path + \
     "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
 data_path = current_path+"/data/"
@@ -48,42 +50,35 @@ p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
 
 d = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
      "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-
-
-#p.resetJointState(hand_id, 0, -0.2)
-#p.resetJointState(hand_id, 1, -.4)
-ik = jacobian_IK.JacobianIK(hand_id, d["finger1"], d["finger2"])
-# ik.calculate_jacobian_f1()
+d2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [
+    0, 0.09974999999999999, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+# {'name': 'lengths': [0.05174999999999999, 0.09974999999999999, 0.09974999999999999, 0.05174999999999999, 0.06]}
+print("JOINT BEFORE", p.getJointState(hand_id, 0)[0])
+print("JOINT BEFORE", p.getJointState(hand_id, 1)[0])
+ik = jacobian_IK.JacobianIK(hand_id, d["finger1"])
+p.resetJointState(hand_id, 0, -.5)
+p.resetJointState(hand_id, 1, .1)
+# ik.finger.calculate_forward_kinematics()
 target = np.array([0.01, .1])
-target2 = np.array([0.02, .1])
-target3 = np.array([0.02, .11])
 target_deb = np.array([0.01, .1, .05])
 debug_id_new = p.addUserDebugPoints(
     [target_deb],
     [[255, 0, 0]],
     pointSize=10)
-j, angles, k = ik.calculate_ik(target)
+start_time = time.time()
+#j, angles, k = ik.calculate_ik(target, ee_location=[-.01, .052, 0])
+j, angles, k = ik.calculate_ik(target, ee_location=None)
+print("--- %s seconds ---" % (time.time() - start_time))
 print(angles)
+print(j)
+print(k)
 p.resetJointState(hand_id, 0, angles[0])
+#p.resetJointState(hand_id, 0, -.16)
 p.resetJointState(hand_id, 1, angles[1])
-j, angles, k = ik.calculate_ik(target2)
-print(angles)
-p.resetJointState(hand_id, 0, angles[0])
-p.resetJointState(hand_id, 1, angles[1])
-j, angles, k = ik.calculate_ik(target3)
-print(angles)
-p.resetJointState(hand_id, 0, angles[0])
-p.resetJointState(hand_id, 1, angles[1])
+#p.resetJointState(hand_id, 1, .5)
+print("JOINT AFTER", p.getJointState(hand_id, 0)[0])
+print("JOINT AFTER", p.getJointState(hand_id, 1)[0])
 
-
-#FK = forward_kinematics.ForwardKinematicsSIM(hand_id, d["finger1"])
-#FK.set_joint_angles([-.2, -.4])
-# FK.calculate_forward_kinematics()
-# m1 = FK.calculate_FK(angles_f1=[.1, .1])
-# m1 = FK.calculate_FK(angles_f1=[-.1, -.1])
-# #FK.calculate_FK(angles_f1=[-.1, -.1])
-#p.resetJointState(hand_id, 0, 0.1)
-#p.resetJointState(hand_id, 1, 0.1)
 m1_c = [p.getLinkState(hand_id, 0)[0], p.getLinkState(hand_id, 0)[1]]
 m2_c = [p.getLinkState(hand_id, 1)[0], p.getLinkState(hand_id, 1)[1]]
 

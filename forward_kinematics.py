@@ -13,10 +13,13 @@ class ForwardKinematicsSIM():
         # transforms
         self.link_translations = []
         self.link_rotations = []
+        self.link_rotations_original = []
         self.current_angles = []
         # Current pose of each link
         self.current_poses = []
         self.link_ids = []
+        # ee_ending location
+        self.original_ee_end = None
        # Create our link id and name lists above
         self.initialize_transforms()
         # Holds the link names for each finger for debugging purposes
@@ -29,8 +32,14 @@ class ForwardKinematicsSIM():
             j_name = j_info[12].decode('UTF-8')
             j_index = j_info[0]
             # get all links that contain finger name, except for those with static in the name
-            if self.finger_name in j_name and "static" not in j_name:
+            if self.finger_name in j_name and "static" not in j_name and "sensor" not in j_name:
                 self.link_ids.append(j_index)
+
+    def update_ee_end_point(self, ee_ending_local):
+        if ee_ending_local:
+            self.link_lengths[-1] = ee_ending_local
+        else:
+            self.link_lengths[-1] = self.original_ee_end
 
     def update_poses_from_sim(self):
         # get each current link pose in global coordinates [(x,y,z), (x,y,z,w)]
@@ -57,6 +66,7 @@ class ForwardKinematicsSIM():
         base_link_r = mh.create_rotation_matrix(p.getEulerFromQuaternion(self.current_poses[0][1])[2])
         self.link_translations.append(base_link_t)
         self.link_rotations.append(base_link_r)
+        self.link_rotations_original.append(base_link_r)
         self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[0])[0])
         # Get the transformation from previous link to next link
         for i in range(1, len(self.current_poses)):
@@ -67,7 +77,10 @@ class ForwardKinematicsSIM():
             mat_r_link = mat_r @ np.linalg.inv(self.link_rotations[-1])
             self.link_translations.append(mat_t_link)
             self.link_rotations.append(mat_r_link)
+            self.link_rotations_original.append(mat_r_link)
             self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[i])[0])
+        self.original_ee_end = self.link_lengths[-1]
+        self.link_rotations_original.reverse()
         print("DEBUG F1 STARTING Transforms: ", self.link_translations, self.link_rotations, self.current_angles)
 
     def set_joint_angles(self, angles):
@@ -92,7 +105,7 @@ class ForwardKinematicsSIM():
         # debug adding link locations
         debug.append(link_location @ [0, 0, 1])
 
-        # self.debug_show_link_positions(debug)
+        self.debug_show_link_positions(debug)
         return link_location @ [0, 0, 1]
 
     def debug_show_link_positions(self, points):

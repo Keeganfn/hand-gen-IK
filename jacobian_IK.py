@@ -6,10 +6,9 @@ import matrix_helper as mh
 
 class JacobianIK():
 
-    def __init__(self, hand_id, finger1_info, finger2_info) -> None:
+    def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
-        self.finger1_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger1_info)
-        self.finger2_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger1_info)
+        self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
         self.MAX_ITERATIONS = 100
         self.MAX_STEP = .01
         self.STARTING_STEP = 1
@@ -17,10 +16,10 @@ class JacobianIK():
 
         pass
 
-    def calculate_jacobian_f1(self):
-        mat_jacob = np.zeros([2, self.finger1_fk.num_links])
-        angles = self.finger1_fk.current_angles.copy()
-        link_end_locations = self.finger1_fk.link_lengths.copy()
+    def calculate_jacobian(self):
+        mat_jacob = np.zeros([2, self.finger_fk.num_links])
+        angles = self.finger_fk.current_angles.copy()
+        link_end_locations = self.finger_fk.link_lengths.copy()
         angles.reverse()
         link_end_locations.reverse()
 
@@ -36,14 +35,14 @@ class JacobianIK():
             mat_r = mh.create_rotation_matrix(total_angles) @ mat_accum
             r = [mat_r[0, 2], mat_r[1, 2], 0]
             omega_cross_r = np.cross(omega_hat, r)
-            mat_jacob[0:2, self.finger1_fk.num_links - i - 1] = np.transpose(omega_cross_r[0:2])
+            mat_jacob[0:2, self.finger_fk.num_links - i - 1] = np.transpose(omega_cross_r[0:2])
 
         #print("JACOB: ", mat_jacob)
         # print(angles)
         # print(link_end_locations)
         return mat_jacob
 
-    def solve_jacobian_f1(self, jacobian, vx_vy):
+    def solve_jacobian(self, jacobian, vx_vy):
         """ Do the pseudo inverse of the jacobian
         @param - jacobian - the 2xn jacobian you calculated from the current joint angles/lengths
         @param - vx_vy - a 2x1 numpy array with the distance to the target point (vector_to_goal)
@@ -55,14 +54,14 @@ class JacobianIK():
         return delta_angles
 
     def vector_to_goal(self, target):
-        end_pt = self.finger1_fk.calculate_forward_kinematics()
+        end_pt = self.finger_fk.calculate_forward_kinematics()
         return np.array(target) - np.array(end_pt[:2])
 
     def distance_to_goal(self, target):
         vec = self.vector_to_goal(target)
         return np.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
 
-    def calculate_ik(self, target, b_one_step=False):
+    def calculate_ik(self, target, b_one_step=False, ee_location=None):
         """
         Use jacobian to calculate angles that move the grasp point towards target. Instead of taking 'big' steps we're
         going to take small steps along the vector (because the Jacobian is only valid around the joint angles)
@@ -75,10 +74,10 @@ class JacobianIK():
         """
         b_keep_going = True
         b_found_better = False
-        print("HERER", self.finger1_fk.current_angles)
-        self.finger1_fk.update_angles_from_sim()
-        print("HERERE", self.finger1_fk.current_angles)
-        angles = self.finger1_fk.current_angles.copy()
+        self.finger_fk.update_ee_end_point(ee_location)
+        self.finger_fk.update_angles_from_sim()
+        angles = self.finger_fk.current_angles.copy()
+        print(angles)
         best_distance = self.distance_to_goal(target)
         count_iterations = 0
         d_step = self.MAX_STEP
@@ -95,17 +94,19 @@ class JacobianIK():
                 b_keep_going = False
 
             delta_angles = np.zeros(len(angles))
-            self.finger1_fk.set_joint_angles(angles)
-            jacobian = self.calculate_jacobian_f1()
-            delta_angles = self.solve_jacobian_f1(jacobian, vec_to_target)
+            self.finger_fk.set_joint_angles(angles)
+            jacobian = self.calculate_jacobian()
+            delta_angles = self.solve_jacobian(jacobian, vec_to_target)
 
             # This rarely happens - but if the matrix is degenerate (the arm is in a straight line) then the angles
             #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
             #  just shortcuts the whole problem. There are far, far better ways to deal with this
             avg_ang_change = np.linalg.norm(delta_angles)
             if avg_ang_change > 100:
+                print("HEREHERE")
                 delta_angles *= 0.1 / avg_ang_change
             elif avg_ang_change < 0.000001:
+                print("HEREHERE1")
                 delta_angles *= 0.1 / avg_ang_change
 
             b_took_one_step = False
@@ -113,11 +114,12 @@ class JacobianIK():
             step_size = self.STARTING_STEP
             # Two stopping criteria - either never got better OR one of the steps worked
             while step_size > self.MAX_STEP and not b_took_one_step:
+                print(self.finger_fk.current_angles)
                 new_angles = []
                 for i, a in enumerate(angles):
                     new_angles.append(a + step_size * delta_angles[i])
                 # Get the new distance with the new angles
-                self.finger1_fk.set_joint_angles(new_angles)
+                self.finger_fk.set_joint_angles(new_angles)
                 new_dist = self.distance_to_goal(target)
 
                 if new_dist > best_distance:
@@ -130,7 +132,7 @@ class JacobianIK():
                 count_iterations += 1
 
             # We can stop if we're close to the goal
-            if np.isclose(best_distance, 0.1):
+            if np.isclose(best_distance, 0.01):
                 b_keep_going = False
 
             # End conditions - b_one_step is true  - don't do another round
