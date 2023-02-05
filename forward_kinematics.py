@@ -35,8 +35,8 @@ class ForwardKinematicsSIM():
             if self.finger_name in j_name and "static" not in j_name and "sensor" not in j_name:
                 self.link_ids.append(j_index)
 
-    def update_ee_end_point(self, ee_ending_local):
-        if ee_ending_local:
+    def update_ee_end_point(self, ee_ending_local=None):
+        if ee_ending_local is not None:
             self.link_lengths[-1] = ee_ending_local
         else:
             self.link_lengths[-1] = self.original_ee_end
@@ -50,11 +50,8 @@ class ForwardKinematicsSIM():
     def update_angles_from_sim(self):
         # get each current link pose in global coordinates [(x,y,z), (x,y,z,w)]
         for i in range(len(self.current_angles)):
-            print("ANGLE ANGLE")
             self.current_angles[i] = p.getJointState(self.hand_id, self.link_ids[i])[0]
-        print("DUH", self.current_angles)
         self.set_joint_angles(self.current_angles)
-        print("DUH", self.current_angles)
 
     def initialize_transforms(self):
         # get initial poses from sim and link ids (MUST BE DONE IN THIS ORDER)
@@ -105,7 +102,7 @@ class ForwardKinematicsSIM():
         # debug adding link locations
         debug.append(link_location @ [0, 0, 1])
 
-        self.debug_show_link_positions(debug)
+        # self.debug_show_link_positions(debug)
         return link_location @ [0, 0, 1]
 
     def debug_show_link_positions(self, points):

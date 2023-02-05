@@ -11,7 +11,7 @@ class JacobianIK():
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
         self.MAX_ITERATIONS = 100
         self.MAX_STEP = .01
-        self.STARTING_STEP = 1
+        self.STARTING_STEP = .5
         self.ERROR = .1
 
         pass
@@ -47,7 +47,6 @@ class JacobianIK():
         @param - jacobian - the 2xn jacobian you calculated from the current joint angles/lengths
         @param - vx_vy - a 2x1 numpy array with the distance to the target point (vector_to_goal)
         @return - changes to the n joint angles, as a 1xn numpy array"""
-
         res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
         delta_angles = res[0]
 
@@ -77,7 +76,6 @@ class JacobianIK():
         self.finger_fk.update_ee_end_point(ee_location)
         self.finger_fk.update_angles_from_sim()
         angles = self.finger_fk.current_angles.copy()
-        print(angles)
         best_distance = self.distance_to_goal(target)
         count_iterations = 0
         d_step = self.MAX_STEP
@@ -101,20 +99,20 @@ class JacobianIK():
             # This rarely happens - but if the matrix is degenerate (the arm is in a straight line) then the angles
             #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
             #  just shortcuts the whole problem. There are far, far better ways to deal with this
-            avg_ang_change = np.linalg.norm(delta_angles)
-            if avg_ang_change > 100:
-                print("HEREHERE")
-                delta_angles *= 0.1 / avg_ang_change
-            elif avg_ang_change < 0.000001:
-                print("HEREHERE1")
-                delta_angles *= 0.1 / avg_ang_change
+            #avg_ang_change = np.linalg.norm(delta_angles)
+            # if avg_ang_change > 100:
+            #     print("HEREHERE")
+            #     delta_angles *= 0.1 / avg_ang_change
+            # elif avg_ang_change < 0.000001:
+            #     print("HEREHERE1")
+            #     delta_angles *= 0.1 / avg_ang_change
 
             b_took_one_step = False
             # Start with a step size of 1 - take one step along the gradient
             step_size = self.STARTING_STEP
             # Two stopping criteria - either never got better OR one of the steps worked
             while step_size > self.MAX_STEP and not b_took_one_step:
-                print(self.finger_fk.current_angles)
+                # print(self.finger_fk.current_angles)
                 new_angles = []
                 for i, a in enumerate(angles):
                     new_angles.append(a + step_size * delta_angles[i])
@@ -132,7 +130,7 @@ class JacobianIK():
                 count_iterations += 1
 
             # We can stop if we're close to the goal
-            if np.isclose(best_distance, 0.01):
+            if np.isclose(best_distance, 0, atol=1e-2):
                 b_keep_going = False
 
             # End conditions - b_one_step is true  - don't do another round

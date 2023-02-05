@@ -16,6 +16,7 @@ from mojograsp.simobjects.object_base import ObjectBase
 # resource paths
 current_path = str(pathlib.Path().resolve())
 hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
+#hand_path = current_path+"/resources/2v2_nosensors/2v2_nosensors_limited.urdf"
 #hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
 cube_path = current_path + \
     "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
@@ -58,32 +59,55 @@ print("JOINT BEFORE", p.getJointState(hand_id, 1)[0])
 ik = jacobian_IK.JacobianIK(hand_id, d["finger1"])
 p.resetJointState(hand_id, 0, -.5)
 p.resetJointState(hand_id, 1, .1)
-# ik.finger.calculate_forward_kinematics()
+
+start_time = time.time()
+ik.finger_fk.update_angles_from_sim()
+start = ik.finger_fk.calculate_forward_kinematics()
 target = np.array([0.01, .1])
-target_deb = np.array([0.01, .1, .05])
-debug_id_new = p.addUserDebugPoints(
+x = np.linspace(start[0], target[0], 150)
+y = np.linspace(start[1], target[1], 150)
+for i in range(150):
+    target = np.array([x[i], y[i]])
+# HEHEHEHEHEEH
+#    print("TARGET", target)
+    target_deb = np.array([x[i], y[i], .05])
+    debug_id_new = p.addUserDebugPoints(
     [target_deb],
     [[255, 0, 0]],
     pointSize=10)
-start_time = time.time()
-#j, angles, k = ik.calculate_ik(target, ee_location=[-.01, .052, 0])
-j, angles, k = ik.calculate_ik(target, ee_location=None)
+    j, angles, k = ik.calculate_ik(target, ee_location=None)
+    p.setJointMotorControlArray(hand_id, [0, 1], p.POSITION_CONTROL, targetPositions=angles)
+    #p.resetJointState(hand_id, 0, angles[0])
+    #p.resetJointState(hand_id, 1, angles[1])
+    p.stepSimulation()
+
 print("--- %s seconds ---" % (time.time() - start_time))
-print(angles)
-print(j)
-print(k)
-p.resetJointState(hand_id, 0, angles[0])
-#p.resetJointState(hand_id, 0, -.16)
-p.resetJointState(hand_id, 1, angles[1])
-#p.resetJointState(hand_id, 1, .5)
-print("JOINT AFTER", p.getJointState(hand_id, 0)[0])
-print("JOINT AFTER", p.getJointState(hand_id, 1)[0])
+# # ik.finger.calculate_forward_kinematics()
+# target = np.array([0.01, .1])
+# target_deb = np.array([0.01, .1, .05])
+# debug_id_new = p.addUserDebugPoints(
+#     [target_deb],
+#     [[255, 0, 0]],
+#     pointSize=10)
+# start_time = time.time()
+# #j, angles, k = ik.calculate_ik(target, ee_location=[-.01, .052, 0])
+# j, angles, k = ik.calculate_ik(target, ee_location=None)
+# print("--- %s seconds ---" % (time.time() - start_time))
+# print(angles)
+# print(j)
+# print(k)
+# p.resetJointState(hand_id, 0, angles[0])
+# #p.resetJointState(hand_id, 0, -.16)
+# p.resetJointState(hand_id, 1, angles[1])
+# #p.resetJointState(hand_id, 1, .5)
+# print("JOINT AFTER", p.getJointState(hand_id, 0)[0])
+# print("JOINT AFTER", p.getJointState(hand_id, 1)[0])
 
-m1_c = [p.getLinkState(hand_id, 0)[0], p.getLinkState(hand_id, 0)[1]]
-m2_c = [p.getLinkState(hand_id, 1)[0], p.getLinkState(hand_id, 1)[1]]
+# m1_c = [p.getLinkState(hand_id, 0)[0], p.getLinkState(hand_id, 0)[1]]
+# m2_c = [p.getLinkState(hand_id, 1)[0], p.getLinkState(hand_id, 1)[1]]
 
-print(f"L0 ACTUAL: {m1_c}")
-print(f"L1 ACTUAL: {m2_c}")
+# print(f"L0 ACTUAL: {m1_c}")
+# print(f"L1 ACTUAL: {m2_c}")
 
 # sim manager
 manager = SimManagerDefault(num_episodes=2)
