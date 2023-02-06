@@ -54,6 +54,9 @@ d = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0
 d2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [
     0, 0.09974999999999999, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
 # {'name': 'lengths': [0.05174999999999999, 0.09974999999999999, 0.09974999999999999, 0.05174999999999999, 0.06]}
+# d2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [
+# 0, 0.09974999999999999, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [
+# 0, 0.05174999999999999, 0]]}}
 print("JOINT BEFORE", p.getJointState(hand_id, 0)[0])
 print("JOINT BEFORE", p.getJointState(hand_id, 1)[0])
 ik = jacobian_IK.JacobianIK(hand_id, d["finger1"])
@@ -72,9 +75,9 @@ for i in range(150):
 #    print("TARGET", target)
     target_deb = np.array([x[i], y[i], .05])
     debug_id_new = p.addUserDebugPoints(
-    [target_deb],
-    [[255, 0, 0]],
-    pointSize=10)
+        [target_deb],
+        [[255, 0, 0]],
+        pointSize=10)
     j, angles, k = ik.calculate_ik(target, ee_location=None)
     p.setJointMotorControlArray(hand_id, [0, 1], p.POSITION_CONTROL, targetPositions=angles)
     #p.resetJointState(hand_id, 0, angles[0])

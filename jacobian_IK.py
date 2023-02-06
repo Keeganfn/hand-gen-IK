@@ -10,8 +10,8 @@ class JacobianIK():
         # Get forward IK info for each finger
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
         self.MAX_ITERATIONS = 100
-        self.MAX_STEP = .01
-        self.STARTING_STEP = .5
+        self.MAX_STEP = .001
+        self.STARTING_STEP = 1
         self.ERROR = .1
 
         pass
@@ -138,5 +138,6 @@ class JacobianIK():
             if b_one_step or not b_took_one_step:
                 b_keep_going = False
 
+        self.finger_fk.update_angles_from_sim()
         # Return the new angles, and whether or not we ever found a better set of angles
         return b_found_better, angles, count_iterations

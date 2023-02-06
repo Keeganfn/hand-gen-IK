@@ -49,8 +49,8 @@ d = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0
 # Get ik and fk setup and reset joints to proper angles
 ik_f1 = jacobian_IK.JacobianIK(hand_id, d["finger1"])
 ik_f2 = jacobian_IK.JacobianIK(hand_id, d["finger2"])
-p.resetJointState(hand_id, 0, -.5)
-p.resetJointState(hand_id, 2, .5)
+p.resetJointState(hand_id, 0, -.4)
+p.resetJointState(hand_id, 2, .4)
 ik_f1.finger_fk.update_angles_from_sim()
 ik_f2.finger_fk.update_angles_from_sim()
 

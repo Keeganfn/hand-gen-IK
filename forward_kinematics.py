@@ -1,6 +1,7 @@
 import pybullet as p
 import numpy as np
 import matrix_helper as mh
+import time
 
 
 class ForwardKinematicsSIM():
@@ -103,6 +104,7 @@ class ForwardKinematicsSIM():
         debug.append(link_location @ [0, 0, 1])
 
         # self.debug_show_link_positions(debug)
+        # time.sleep(.1)
         return link_location @ [0, 0, 1]
 
     def debug_show_link_positions(self, points):
