@@ -161,10 +161,10 @@ from mojograsp.simobjects.object_base import ObjectBase
 # manager.stall()
 
 
-def setup_hand(hand_path, hand_info, start_angle=.5):
+def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     # load urdf
     hand_id = p.loadURDF(hand_path, useFixedBase=True,
-                         basePosition=[0.0, 0.0, 0.05])
+                         basePosition=[x, 0.0, 0.05])
     # setup ik
     ik_f1 = jacobian_IK.JacobianIK(hand_id, hand_info["finger1"])
     ik_f2 = jacobian_IK.JacobianIK(hand_id, hand_info["finger2"])
@@ -191,8 +191,8 @@ def setup_hand(hand_path, hand_info, start_angle=.5):
 def get_paths():
     # resource paths
     current_path = str(pathlib.Path().resolve())
-    #hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
-    hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
+    hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
+    #hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
     cube_path = current_path + \
         "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
     data_path = current_path+"/data/"
@@ -207,15 +207,48 @@ def setup_sim():
                                  cameraTargetPosition=[0, 0.1, 0.5])
     # load objects into pybullet
     plane_id = p.loadURDF("plane.urdf")
-    #p.changeDynamics(plane_id, -1, lateralFriction=.05, rollingFriction=.05, spinningFriction=.05)
+    p.changeDynamics(plane_id, -1, lateralFriction=.05, rollingFriction=.05, spinningFriction=.05)
 
 
-if __name__ == "__main__":
+def test():
     # start pybullet
     setup_sim()
 
     directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    # get paths for data and sim objects
+    current_path, hand_path, cube_path, data_path = get_paths()
+    # load hand
+    test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
+                 "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+    test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
+        "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
+
+    hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand2, .4, x=0)
+    # load cube
+    cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05])
+    controller = asterisk_controller.AsteriskController(
+        hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+
+    hand_id2, ik_f12, ik_f22, distal_f1_index2, distal_f2_index2 = setup_hand(hand_path, test_hand2, .4, x=1)
+    # load cube
+    cube_id2 = p.loadURDF(cube_path, basePosition=[1.0, 0.1067, .05])
+    controller2 = asterisk_controller.AsteriskController(
+        hand_id2, cube_id2, ik_f12, ik_f22, distal_f1_index2, distal_f2_index2)
+
+    controller.close_hand()
+    controller.move_hand_multi(directions[0])
+    controller2.close_hand()
+    controller2.move_hand_multi(directions[1], main=True, offset=1)
+
+
+if __name__ == "__main__":
+    # start pybullet
+    # test()
+    setup_sim()
+
+    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
     start = time.time()
+    time.sleep(5)
     for i in range(len(directions)):
         # get paths for data and sim objects
         current_path, hand_path, cube_path, data_path = get_paths()
@@ -225,7 +258,7 @@ if __name__ == "__main__":
         test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
             "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
 
-        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand2, .4)
+        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, .5)
         # load cube
         cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05])
         controller = asterisk_controller.AsteriskController(

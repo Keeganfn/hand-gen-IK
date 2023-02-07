@@ -95,17 +95,23 @@ class JacobianIK():
             self.finger_fk.set_joint_angles(angles)
             jacobian = self.calculate_jacobian()
             delta_angles = self.solve_jacobian(jacobian, vec_to_target)
+            #print("JACOBIAN ", jacobian)
+            #print("DELTA_ANGLES ", delta_angles)
 
             # This rarely happens - but if the matrix is degenerate (the arm is in a straight line) then the angles
             #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
             #  just shortcuts the whole problem. There are far, far better ways to deal with this
-            #avg_ang_change = np.linalg.norm(delta_angles)
-            # if avg_ang_change > 100:
-            #     print("HEREHERE")
-            #     delta_angles *= 0.1 / avg_ang_change
-            # elif avg_ang_change < 0.000001:
-            #     print("HEREHERE1")
-            #     delta_angles *= 0.1 / avg_ang_change
+            avg_ang_change = np.linalg.norm(delta_angles)
+            if avg_ang_change > 100:
+                print("JACOBIAN TOO LARGE")
+                # print(delta_angles)
+                # print(target)
+                delta_angles *= 0.1 / avg_ang_change
+                # print(delta_angles)
+            elif avg_ang_change < 0.000001:
+                print("JACOBIAN TOO SMALL")
+                # print(delta_angles)
+                delta_angles *= 0.1 / avg_ang_change
 
             b_took_one_step = False
             # Start with a step size of 1 - take one step along the gradient
