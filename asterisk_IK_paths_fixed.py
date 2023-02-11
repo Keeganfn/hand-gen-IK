@@ -163,8 +163,9 @@ from mojograsp.simobjects.object_base import ObjectBase
 
 def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     # load urdf
-    hand_id = p.loadURDF(hand_path, useFixedBase=True,
-                         basePosition=[x, 0.0, 0.05])
+    hand_id = p.loadURDF(
+        hand_path, useFixedBase=True, basePosition=[x, 0.0, 0.05],
+        flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES | p.URDF_USE_SELF_COLLISION)
     # setup ik
     ik_f1 = jacobian_IK.JacobianIK(hand_id, hand_info["finger1"])
     ik_f2 = jacobian_IK.JacobianIK(hand_id, hand_info["finger2"])
@@ -185,14 +186,18 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     p.changeVisualShape(hand_id, 1, rgbaColor=[0.3, 0.3, 0.3, 1])
     p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
     p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
+    p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.74)
+    p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=1.74)
+    p.changeDynamics(hand_id, 2, jointLowerLimit=1.57, jointUpperLimit=-1.74)
+    p.changeDynamics(hand_id, 3, jointLowerLimit=1.57, jointUpperLimit=-1.74)
     return hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index
 
 
 def get_paths():
     # resource paths
     current_path = str(pathlib.Path().resolve())
-    hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
-    #hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
+    #hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
+    hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
     cube_path = current_path + \
         "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
     data_path = current_path+"/data/"
@@ -206,8 +211,8 @@ def setup_sim():
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
                                  cameraTargetPosition=[0, 0.1, 0.5])
     # load objects into pybullet
-    plane_id = p.loadURDF("plane.urdf")
-    p.changeDynamics(plane_id, -1, lateralFriction=.05, rollingFriction=.05, spinningFriction=.05)
+    plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+    p.changeDynamics(plane_id, -1, lateralFriction=.5)
 
 
 def test():
@@ -248,7 +253,6 @@ if __name__ == "__main__":
 
     directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
     start = time.time()
-    time.sleep(5)
     for i in range(len(directions)):
         # get paths for data and sim objects
         current_path, hand_path, cube_path, data_path = get_paths()
@@ -258,9 +262,9 @@ if __name__ == "__main__":
         test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
             "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
 
-        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, .5)
+        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand2, .5)
         # load cube
-        cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05])
+        cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
         controller = asterisk_controller.AsteriskController(
             hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
         controller.close_hand()

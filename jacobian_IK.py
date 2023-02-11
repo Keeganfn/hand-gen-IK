@@ -9,12 +9,10 @@ class JacobianIK():
     def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
-        self.MAX_ITERATIONS = 100
-        self.MAX_STEP = .001
+        self.MAX_ITERATIONS = 1000
+        self.MAX_STEP = .005
         self.STARTING_STEP = 1
         self.ERROR = .1
-
-        pass
 
     def calculate_jacobian(self):
         mat_jacob = np.zeros([2, self.finger_fk.num_links])
@@ -47,10 +45,15 @@ class JacobianIK():
         @param - jacobian - the 2xn jacobian you calculated from the current joint angles/lengths
         @param - vx_vy - a 2x1 numpy array with the distance to the target point (vector_to_goal)
         @return - changes to the n joint angles, as a 1xn numpy array"""
-        res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
-        delta_angles = res[0]
-
-        return delta_angles
+        if np.isnan(jacobian).any():
+            return None
+        try:
+            res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
+            delta_angles = res[0]
+            return delta_angles
+        except:
+            print(jacobian)
+            return None
 
     def vector_to_goal(self, target):
         end_pt = self.finger_fk.calculate_forward_kinematics()
@@ -95,6 +98,8 @@ class JacobianIK():
             self.finger_fk.set_joint_angles(angles)
             jacobian = self.calculate_jacobian()
             delta_angles = self.solve_jacobian(jacobian, vec_to_target)
+            if delta_angles is None:
+                return b_found_better, angles, count_iterations
             #print("JACOBIAN ", jacobian)
             #print("DELTA_ANGLES ", delta_angles)
 
@@ -136,7 +141,7 @@ class JacobianIK():
                 count_iterations += 1
 
             # We can stop if we're close to the goal
-            if np.isclose(best_distance, 0, atol=1e-2):
+            if np.isclose(best_distance, 0, atol=1e-3):
                 b_keep_going = False
 
             # End conditions - b_one_step is true  - don't do another round
