@@ -34,11 +34,8 @@ class AsteriskController():
             "NW": np.array([-0.2, .2])}
 
     def get_cube_position(self):
-        p.changeDynamics(self.cube_id, -1, mass=5)
         #p.changeDynamics(self.hand_id, 1, mass=5)
-        p.changeDynamics(self.hand_id, 1, lateralFriction=1, mass=5)
         #p.changeDynamics(self.hand_id, 3, mass=5)
-        p.changeDynamics(self.hand_id, 3, lateralFriction=1, mass=5)
         print(p.getBasePositionAndOrientation(self.cube_id)[0])
         return p.getBasePositionAndOrientation(self.cube_id)[0]
 
@@ -67,11 +64,11 @@ class AsteriskController():
         contact_point_info1 = None
         contact_point_info2 = None
         tsteps = 0
-        while tsteps < 2000:
+        while tsteps < 1000:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .01))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .01))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .005))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .005))
 
             if debug:
                 self.show_points_debug(sub_target_f1)
@@ -99,6 +96,9 @@ class AsteriskController():
 
         start = time.time()
         tsteps = 0
+        cp1_count = 0
+        cp2_count = 0
+        cp3_count = 0
         while tsteps < 200:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
@@ -118,8 +118,21 @@ class AsteriskController():
             if not contact_point_info1 and not contact_point_info2:
                 break
 
+            if not contact_point_info1:
+                cp1_count += 1
+                if cp1_count > 5:
+                    print("BROKEN CONTACT 1")
+                    break
+
+            if not contact_point_info2:
+                cp2_count += 1
+                if cp2_count > 5:
+                    print("BROKEN CONTACT 2")
+                    break
+
             if contact_point_info2:
                 #print("GOt HERE")
+                cp1_count = 0
                 t2 = mh.create_translation_matrix(contact_point_info2[-1][6])
                 f2 = mh.create_transformation_matrix(
                     p.getLinkState(self.hand_id, 3)[0],
@@ -131,6 +144,7 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f2)
 
             if contact_point_info1:
+                cp2_count = 0
                 t1 = mh.create_translation_matrix(contact_point_info1[-1][6])
                 f1 = mh.create_transformation_matrix(
                     p.getLinkState(self.hand_id, 1)[0],

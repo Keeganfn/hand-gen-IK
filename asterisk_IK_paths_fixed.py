@@ -1,5 +1,8 @@
+from copy import deepcopy
+import os
 import time
 import pybullet as p
+import json
 import math
 import pybullet_data
 import numpy as np
@@ -167,8 +170,11 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
         hand_path, useFixedBase=True, basePosition=[x, 0.0, 0.05],
         flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES | p.URDF_USE_SELF_COLLISION)
     # setup ik
-    ik_f1 = jacobian_IK.JacobianIK(hand_id, hand_info["finger1"])
-    ik_f2 = jacobian_IK.JacobianIK(hand_id, hand_info["finger2"])
+    print(hand_info["finger1"])
+    print(hand_info["finger2"])
+    from copy import deepcopy
+    ik_f1 = jacobian_IK.JacobianIK(hand_id, deepcopy(hand_info["finger1"]))
+    ik_f2 = jacobian_IK.JacobianIK(hand_id, deepcopy(hand_info["finger2"]))
     distal_f1_index = ik_f1.finger_fk.link_ids[-1]
     distal_f2_index = ik_f2.finger_fk.link_ids[-1]
     proximal_f1_index = ik_f1.finger_fk.link_ids[0]
@@ -181,23 +187,26 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     ik_f1.finger_fk.update_angles_from_sim()
     ik_f2.finger_fk.update_angles_from_sim()
     # change color
+
+    p.changeDynamics(hand_id, 1, lateralFriction=1, mass=5)
+    p.changeDynamics(hand_id, 3, lateralFriction=1, mass=5)
     p.changeVisualShape(hand_id, -1, rgbaColor=[0.3, 0.3, 0.3, 1])
     p.changeVisualShape(hand_id, 0, rgbaColor=[1, 0.5, 0, 1])
     p.changeVisualShape(hand_id, 1, rgbaColor=[0.3, 0.3, 0.3, 1])
     p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
     p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
-    p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.74)
-    p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=1.74)
-    p.changeDynamics(hand_id, 2, jointLowerLimit=1.57, jointUpperLimit=-1.74)
-    p.changeDynamics(hand_id, 3, jointLowerLimit=1.57, jointUpperLimit=-1.74)
+    p.changeDynamics(hand_id, 0, jointLowerLimit=-2.09, jointUpperLimit=1.39)
+    p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=2.09)
+    p.changeDynamics(hand_id, 2, jointLowerLimit=-1.39, jointUpperLimit=2.09)
+    p.changeDynamics(hand_id, 3, jointLowerLimit=-2.09, jointUpperLimit=1.57)
     return hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index
 
 
 def get_paths():
     # resource paths
     current_path = str(pathlib.Path().resolve())
-    #hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
-    hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
+    hand_path = current_path+"/resources/2v2_Demo/hand/2v2_Demo.urdf"
+    #hand_path = current_path+"/resources/2v2_2.1_1.2_1.1_8.10/hand/2v2_2.1_1.2_1.1_8.10.urdf"
     cube_path = current_path + \
         "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
     data_path = current_path+"/data/"
@@ -228,7 +237,7 @@ def test():
     test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
         "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
 
-    hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand2, .4, x=0)
+    hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, .4, x=0)
     # load cube
     cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05])
     controller = asterisk_controller.AsteriskController(
@@ -246,9 +255,64 @@ def test():
     controller2.move_hand_multi(directions[1], main=True, offset=1)
 
 
+def get_hand_paths():
+    current_path = str(pathlib.Path().resolve())
+
+    paths = []
+    names = []
+    for file in os.listdir(current_path + "/generated_hands"):
+        names.append(str(file))
+        temp_str = current_path + "/generated_hands/" + str(file) + "/hand/" + str(file) + ".urdf"
+        paths.append(temp_str)
+    paths.pop(-1)
+    names.pop(-1)
+
+    with open(current_path + "/generated_hands/hand_descriptions.json", "r+") as fp:
+        hand_descs = json.load(fp)
+
+    return paths, hand_descs, names
+
+
+def run_batch():
+    setup_sim()
+    hand_paths, hand_descs, names = get_hand_paths()
+    for i in range(len(hand_paths)):
+        directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        current_path, _, cube_path, data_path = get_paths()
+        print(len(names))
+        print(len(hand_descs))
+        for k in range(len(hand_descs)):
+            if hand_descs[k]["name"] in names:
+                for b in range(len(names)):
+                    if names[b] == hand_descs[k]:
+                        test_hand = deepcopy(hand_descs[k]["sim"])
+                        hand_descs.pop(k)
+                        names.pop(b)
+                        print(names[b])
+                        print(test_hand)
+                        hand_path = deepcopy(hand_paths[b])
+                        hand_paths.pop(b)
+                        print("HeRERERERER")
+
+        for j in range(len(directions)):
+            # get paths for data and sim objects
+            # load hand
+            hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
+            # load cube
+            cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+            p.changeDynamics(cube_id, -1, mass=5)
+            controller = asterisk_controller.AsteriskController(
+                hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+            controller.close_hand()
+            controller.move_hand(directions[j])
+            p.resetSimulation()
+
+
 if __name__ == "__main__":
     # start pybullet
     # test()
+    run_batch()
+    get_hand_paths()
     setup_sim()
 
     directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
@@ -262,9 +326,10 @@ if __name__ == "__main__":
         test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
             "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
 
-        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand2, .5)
+        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, .5)
         # load cube
         cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+        p.changeDynamics(cube_id, -1, mass=5)
         controller = asterisk_controller.AsteriskController(
             hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
         controller.close_hand()

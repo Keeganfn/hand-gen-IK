@@ -95,13 +95,13 @@ class ForwardKinematicsSIM():
         for i in range(len(self.link_lengths)):
             link_location = link_location @ self.link_translations[i] @ self.link_rotations[i]
             # debug adding link locations
-            #debug.append(link_location @ [0, 0, 1])
+            debug.append(link_location @ [0, 0, 1])
             #print(f"LINK {i}: {link_location}")
         # finally get the end effector end location
         link_end = mh.create_translation_matrix(self.link_lengths[-1])
         link_location = link_location @ link_end
         # debug adding link locations
-        #debug.append(link_location @ [0, 0, 1])
+        debug.append(link_location @ [0, 0, 1])
 
         # self.debug_show_link_positions(debug)
         # time.sleep(.1)
