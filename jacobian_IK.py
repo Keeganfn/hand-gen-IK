@@ -9,15 +9,17 @@ class JacobianIK():
     def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
-        self.MAX_ITERATIONS = 1000
+        self.MAX_ITERATIONS = 500
         self.MAX_STEP = .005
         self.STARTING_STEP = 1
         self.ERROR = .1
+        self.lam = .1
 
     def calculate_jacobian(self):
         mat_jacob = np.zeros([2, self.finger_fk.num_links])
         angles = self.finger_fk.current_angles.copy()
         link_end_locations = self.finger_fk.link_lengths.copy()
+        # print(angles)
         angles.reverse()
         link_end_locations.reverse()
 
@@ -47,13 +49,18 @@ class JacobianIK():
         @return - changes to the n joint angles, as a 1xn numpy array"""
         if np.isnan(jacobian).any():
             return None
-        try:
-            res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
-            delta_angles = res[0]
-            return delta_angles
-        except:
-            print(jacobian)
-            return None
+        res = np.linalg.lstsq(jacobian, vx_vy, rcond=None)
+        # jt = jacobian.T
+        # lam = .02**2
+        # id = np.identity(2)
+        # cof1 = jacobian @ jt
+        # cof2 = lam * id
+        # cof = np.linalg.inv(cof1 + cof2)
+        # delta_angles = jt @ cof @ vx_vy
+        #print("DELTA", delta_angles)
+
+        delta_angles = res[0]
+        return delta_angles
 
     def vector_to_goal(self, target):
         end_pt = self.finger_fk.calculate_forward_kinematics()
@@ -98,7 +105,9 @@ class JacobianIK():
             self.finger_fk.set_joint_angles(angles)
             jacobian = self.calculate_jacobian()
             delta_angles = self.solve_jacobian(jacobian, vec_to_target)
+            # print(jacobian)
             if delta_angles is None:
+                print("HERE")
                 return b_found_better, angles, count_iterations
             #print("JACOBIAN ", jacobian)
             #print("DELTA_ANGLES ", delta_angles)
@@ -113,10 +122,13 @@ class JacobianIK():
                 # print(target)
                 delta_angles *= 0.1 / avg_ang_change
                 # print(delta_angles)
-            elif avg_ang_change < 0.000001:
-                print("JACOBIAN TOO SMALL")
+            if delta_angles[0] == 0 and delta_angles[1] == 0:
+                return b_found_better, angles, count_iterations
+            # elif avg_ang_change < 0.000001:
+            #    print(delta_angles)
+            #    print("JACOBIAN TOO SMALL")
                 # print(delta_angles)
-                delta_angles *= 0.1 / avg_ang_change
+                #delta_angles += 0.1
 
             b_took_one_step = False
             # Start with a step size of 1 - take one step along the gradient

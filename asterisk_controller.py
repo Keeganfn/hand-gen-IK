@@ -44,7 +44,7 @@ class AsteriskController():
         temp_y = end_vec[1] - start_vec[1]
         magnitude = math.sqrt((temp_x**2 + temp_y**2))
         if magnitude <= distance:
-            return [start_vec[0], start_vec[1]]
+            return [end_vec[0], end_vec[1]]
         temp_x /= magnitude
         temp_y /= magnitude
         temp_x = start_vec[0] + distance*temp_x
@@ -55,7 +55,7 @@ class AsteriskController():
         debug_points = [debug_points[0], debug_points[1], .05]
         debug_id_new = p.addUserDebugPoints(
             [debug_points],
-            [[255, 0, 0]],
+            [[0, 255, 0]],
             pointSize=10)
 
     def close_hand(self, debug=False):
@@ -64,11 +64,11 @@ class AsteriskController():
         contact_point_info1 = None
         contact_point_info2 = None
         tsteps = 0
-        while tsteps < 1000:
+        while tsteps < 100000:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .005))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .005))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .01))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .01))
 
             if debug:
                 self.show_points_debug(sub_target_f1)
@@ -99,11 +99,11 @@ class AsteriskController():
         cp1_count = 0
         cp2_count = 0
         cp3_count = 0
-        while tsteps < 200:
+        while tsteps < 1000:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .01))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .01))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .001))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .001))
             if debug:
                 self.show_points_debug(sub_target_f1)
                 self.show_points_debug(sub_target_f2)
@@ -116,22 +116,24 @@ class AsteriskController():
                 break
 
             if not contact_point_info1 and not contact_point_info2:
+                print("LOST CONTACT")
                 break
 
             if not contact_point_info1:
                 cp1_count += 1
-                if cp1_count > 5:
+                if cp1_count > 30:
                     print("BROKEN CONTACT 1")
                     break
 
             if not contact_point_info2:
                 cp2_count += 1
-                if cp2_count > 5:
+                if cp2_count > 30:
                     print("BROKEN CONTACT 2")
                     break
 
             if contact_point_info2:
                 #print("GOt HERE")
+                p.getClosestPoints(self.hand_id, self.cube_id, 2, linkIndexA=1)
                 cp1_count = 0
                 t2 = mh.create_translation_matrix(contact_point_info2[-1][6])
                 f2 = mh.create_transformation_matrix(
@@ -144,6 +146,7 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f2)
 
             if contact_point_info1:
+                p.getClosestPoints(self.hand_id, self.cube_id, 2, linkIndexA=3)
                 cp2_count = 0
                 t1 = mh.create_translation_matrix(contact_point_info1[-1][6])
                 f1 = mh.create_transformation_matrix(

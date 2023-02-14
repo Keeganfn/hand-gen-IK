@@ -182,8 +182,8 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     # get joints in starting positions
     p.resetJointState(hand_id, proximal_f1_index, -start_angle)
     p.resetJointState(hand_id, proximal_f2_index, start_angle)
-    p.resetJointState(hand_id, distal_f1_index, .2)
-    p.resetJointState(hand_id, distal_f2_index, -.2)
+    p.resetJointState(hand_id, distal_f1_index, .4)
+    p.resetJointState(hand_id, distal_f2_index, -.4)
     ik_f1.finger_fk.update_angles_from_sim()
     ik_f2.finger_fk.update_angles_from_sim()
     # change color
@@ -224,51 +224,29 @@ def setup_sim():
     p.changeDynamics(plane_id, -1, lateralFriction=.5)
 
 
-def test():
-    # start pybullet
-    setup_sim()
-
-    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    # get paths for data and sim objects
-    current_path, hand_path, cube_path, data_path = get_paths()
-    # load hand
-    test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
-                 "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-    test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
-        "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
-
-    hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, .4, x=0)
-    # load cube
-    cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05])
-    controller = asterisk_controller.AsteriskController(
-        hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
-
-    hand_id2, ik_f12, ik_f22, distal_f1_index2, distal_f2_index2 = setup_hand(hand_path, test_hand2, .4, x=1)
-    # load cube
-    cube_id2 = p.loadURDF(cube_path, basePosition=[1.0, 0.1067, .05])
-    controller2 = asterisk_controller.AsteriskController(
-        hand_id2, cube_id2, ik_f12, ik_f22, distal_f1_index2, distal_f2_index2)
-
-    controller.close_hand()
-    controller.move_hand_multi(directions[0])
-    controller2.close_hand()
-    controller2.move_hand_multi(directions[1], main=True, offset=1)
-
-
 def get_hand_paths():
     current_path = str(pathlib.Path().resolve())
 
     paths = []
     names = []
     for file in os.listdir(current_path + "/generated_hands"):
-        names.append(str(file))
+        print(str(file))
+        print(len(names))
         temp_str = current_path + "/generated_hands/" + str(file) + "/hand/" + str(file) + ".urdf"
         paths.append(temp_str)
+        names.append(str(file))
+
     paths.pop(-1)
+    print(len(names))
     names.pop(-1)
+    print(names[60])
+    print(len(names))
 
     with open(current_path + "/generated_hands/hand_descriptions.json", "r+") as fp:
         hand_descs = json.load(fp)
+
+    while len(hand_descs) <= len(names):
+        hand_descs.append({"name": "dub"})
 
     return paths, hand_descs, names
 
@@ -276,23 +254,23 @@ def get_hand_paths():
 def run_batch():
     setup_sim()
     hand_paths, hand_descs, names = get_hand_paths()
+    print(len(names), len(hand_descs))
     for i in range(len(hand_paths)):
         directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
         current_path, _, cube_path, data_path = get_paths()
-        print(len(names))
-        print(len(hand_descs))
+        t = False
         for k in range(len(hand_descs)):
-            if hand_descs[k]["name"] in names:
-                for b in range(len(names)):
-                    if names[b] == hand_descs[k]:
-                        test_hand = deepcopy(hand_descs[k]["sim"])
-                        hand_descs.pop(k)
-                        names.pop(b)
-                        print(names[b])
-                        print(test_hand)
-                        hand_path = deepcopy(hand_paths[b])
-                        hand_paths.pop(b)
-                        print("HeRERERERER")
+            if t == True:
+                break
+            for b in range(len(names)):
+                if hand_descs[k]["name"] == names[b]:
+                    test_hand = deepcopy(hand_descs[k]["sim"])
+                    print(hand_descs.pop(k))
+                    print(names.pop(b))
+                    hand_path = deepcopy(hand_paths[b])
+                    print(hand_paths.pop(b))
+                    t = True
+                    break
 
         for j in range(len(directions)):
             # get paths for data and sim objects
@@ -300,7 +278,7 @@ def run_batch():
             hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
             # load cube
             cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-            p.changeDynamics(cube_id, -1, mass=5)
+            p.changeDynamics(cube_id, -1, mass=5, restitution=1.1)
             controller = asterisk_controller.AsteriskController(
                 hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
             controller.close_hand()
@@ -312,7 +290,7 @@ if __name__ == "__main__":
     # start pybullet
     # test()
     run_batch()
-    get_hand_paths()
+    # get_hand_paths()
     setup_sim()
 
     directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
