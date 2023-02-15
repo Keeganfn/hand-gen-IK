@@ -1,19 +1,25 @@
-import forward_kinematics_live
+from .matrix_helper import MatrixHelp
+from .forward_kinematics_live import ForwardKinematicsLIVE
 import numpy as np
-import matrix_helper as mh
 
 
 class JacobianIKLIVE():
 
     def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
-        self.finger_fk = forward_kinematics_live.ForwardKinematicsLIVE(hand_id, finger_info)
-        self.MAX_ITERATIONS = 1000
+        self.finger_fk = ForwardKinematicsLIVE(hand_id, finger_info)
+        self.mh = MatrixHelp()
+
+        # TODO: May 
+        self.MAX_ITERATIONS = 10000
         self.MAX_STEP = .005
-        self.STARTING_STEP = .1
+        self.STARTING_STEP = 1
         self.ERROR = .1
 
         pass
+
+    def update_angles(self, angles):
+        self.finger_fk.update_angles_from_motors(angles)
 
     def calculate_jacobian(self):
         mat_jacob = np.zeros([2, self.finger_fk.num_links])
@@ -30,8 +36,8 @@ class JacobianIKLIVE():
         total_angles = sum(angles)
         for i, (ang, length) in enumerate(zip(angles, link_end_locations)):
             total_angles -= ang
-            mat_accum = mh.create_rotation_matrix(ang) @ mh.create_translation_matrix(length) @ mat_accum
-            mat_r = mh.create_rotation_matrix(total_angles) @ mat_accum
+            mat_accum = self.mh.create_rotation_matrix(ang) @ self.mh.create_translation_matrix(length) @ mat_accum
+            mat_r = self.mh.create_rotation_matrix(total_angles) @ mat_accum
             r = [mat_r[0, 2], mat_r[1, 2], 0]
             omega_cross_r = np.cross(omega_hat, r)
             mat_jacob[0:2, self.finger_fk.num_links - i - 1] = np.transpose(omega_cross_r[0:2])
@@ -55,7 +61,8 @@ class JacobianIKLIVE():
     def distance_to_goal(self, target):
         vec = self.vector_to_goal(target)
         return np.sqrt(vec[0] * vec[0] + vec[1] * vec[1])
-
+    # TODO: EE is [x,y,z] but z doesn't matter (make 1)
+    # If you pass None it goes to default position
     def calculate_ik(self, target, b_one_step=False, ee_location=None):
         """
         Use jacobian to calculate angles that move the grasp point towards target. Instead of taking 'big' steps we're
@@ -70,6 +77,7 @@ class JacobianIKLIVE():
         b_keep_going = True
         b_found_better = False
         self.finger_fk.update_ee_end_point(ee_location)
+        # TODO: Update angles from motors
         #self.finger_fk.update_angles_from_sim()
         angles = self.finger_fk.current_angles.copy()
         best_distance = self.distance_to_goal(target)
@@ -143,5 +151,6 @@ class JacobianIKLIVE():
                 b_keep_going = False
 
         #self.finger_fk.update_angles_from_sim()
+        # TODO: Update angles by motors
         # Return the new angles, and whether or not we ever found a better set of angles
         return b_found_better, angles, count_iterations
