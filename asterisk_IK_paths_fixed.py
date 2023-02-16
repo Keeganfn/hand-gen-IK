@@ -69,7 +69,7 @@ def get_paths():
 
 
 def setup_sim():
-    physics_client = p.connect(p.GUI)
+    physics_client = p.connect(p.DIRECT)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.setGravity(0, 0, -10)
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
@@ -121,7 +121,7 @@ def run_batch():
                 if hand_descs[k]["name"] == names[b]:
                     test_hand = deepcopy(hand_descs[k]["sim"])
                     print(hand_descs.pop(k))
-                    print(names.pop(b))
+                    trial_name = names.pop(b)
                     hand_path = deepcopy(hand_paths[b])
                     print(hand_paths.pop(b))
                     t = True
@@ -138,6 +138,10 @@ def run_batch():
                 hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
             controller.close_hand()
             controller.move_hand2(directions[j])
+            data_p = current_path + "/data/" + trial_name
+            if not os.path.exists(data_p):
+                os.makedirs(data_p)
+            controller.save(trial_name, directions[j], data_p)
             p.resetSimulation()
 
 
@@ -146,31 +150,33 @@ if __name__ == "__main__":
     # test()
     run_batch()
     # get_hand_paths()
-    setup_sim()
+    # setup_sim()
 
-    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    start = time.time()
-    for i in range(len(directions)):
-        # get paths for data and sim objects
-        current_path, hand_path, cube_path, data_path = get_paths()
-        # load hand
-        test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
-                     "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-        test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
-            "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
+    # directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    # start = time.time()
+    # for i in range(len(directions)):
+    #     # get paths for data and sim objects
+    #     current_path, hand_path, cube_path, data_path = get_paths()
+    #     # load hand
+    #     test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
+    #                  "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+    #     test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
+    #         "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
 
-        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
-        # load cube
-        cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-        p.changeDynamics(cube_id, -1, restitution=.95, mass=5)
+    #     hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
+    #     # load cube
+    #     cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+    #     p.changeDynamics(cube_id, -1, restitution=.95, mass=5)
 
-        controller = asterisk_controller.AsteriskController(
-            hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
-        controller.close_hand()
-        # controller.close_hand2()
-        controller.move_hand2(directions[i])
-        p.resetSimulation()
-    print("END TIME", time.time() - start)
+    #     controller = asterisk_controller.AsteriskController(
+    #         hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+    #     controller.close_hand()
+    #     # controller.close_hand2()
+    #     controller.move_hand2(directions[i])
+    #     controller.save("2v2_test", directions[i])
+    #     p.resetSimulation()
+
+    # print("END TIME", time.time() - start)
 
 
 # reset_sim

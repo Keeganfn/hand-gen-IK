@@ -80,7 +80,7 @@ class ForwardKinematicsSIM():
             self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[i])[0])
         self.original_ee_end = self.link_lengths[-1]
         self.link_rotations_original.reverse()
-        print("DEBUG F1 STARTING Transforms: ", self.link_translations, self.link_rotations, self.current_angles)
+        #print("DEBUG F1 STARTING Transforms: ", self.link_translations, self.link_rotations, self.current_angles)
 
     def set_joint_angles(self, angles):
         # sets the joint angles and updates rotation matrices

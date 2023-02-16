@@ -3,6 +3,7 @@ import pybullet as p
 import time
 import math
 import matrix_helper as mh
+import pickle as pkl
 
 
 class AsteriskController():
@@ -32,6 +33,7 @@ class AsteriskController():
             "SW": np.array([-0.2, 0]),
             "W": np.array([-0.2, .1067]),
             "NW": np.array([-0.2, .2])}
+        self.trial_data = []
         # self.f1_direction_dict = {
         #     "N": np.array([0.01, .15]),
         #     "NE": np.array([0.2, .2]),
@@ -54,7 +56,7 @@ class AsteriskController():
     def get_cube_position(self):
         # p.changeDynamics(self.hand_id, 1, mass=5)
         # p.changeDynamics(self.hand_id, 3, mass=5)
-        print(p.getBasePositionAndOrientation(self.cube_id)[0])
+        # print(p.getBasePositionAndOrientation(self.cube_id)[0])
         return p.getBasePositionAndOrientation(self.cube_id)[0]
 
     def step_towards_goal(self, start_vec, end_vec, distance):
@@ -110,11 +112,33 @@ class AsteriskController():
             tsteps += 1
             p.stepSimulation()
 
+    def record(self):
+        temp = self.ik_f1.finger_fk.current_angles + self.ik_f1.finger_fk.current_angles
+        obj_pos = p.getBasePositionAndOrientation(self.cube_id)
+        obj_pos1 = list(obj_pos[0])
+        obj_pos1[1] -= .1067
+        save_dict = {
+            "obj_pos": obj_pos1,
+            "obj_or": obj_pos[1],
+            "joint_1": temp[0],
+            "joint_2": temp[1],
+            "joint_3": temp[2],
+            "joint_4": temp[3]}
+        self.trial_data.append(save_dict)
+
+    def save(self, name, direction, path):
+        #label = "data/" + direction + "_" + name + ".pkl"
+        label = path + "/" + direction + "_" + name + ".pkl"
+
+        with open(label, "wb+") as file:
+            pkl.dump(self.trial_data, file)
+        self.trial_data = []
+
     def move_hand2(self, direction, debug=False):
         target_f1 = self.f1_direction_dict[direction]
         target_f2 = self.f2_direction_dict[direction]
 
-        start = time.time()
+#        start = time.time()
         tsteps = 0
         cp1_count = 0
         cp2_count = 0
@@ -197,8 +221,10 @@ class AsteriskController():
                 p.setJointMotorControlArray(self.hand_id, self.ik_f1.finger_fk.link_ids,
                                             p.POSITION_CONTROL, targetPositions=angles_f1)
             tsteps += 1
+
+            self.record()
             p.stepSimulation()
-        print("CLOSE TIME", time.time() - start, tsteps)
+#        print("CLOSE TIME", time.time() - start, tsteps)
 
     def move_hand(self, direction, debug=False):
         target_f1 = self.f1_direction_dict[direction]
@@ -273,4 +299,4 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f1)
             tsteps += 1
             p.stepSimulation()
-        print("CLOSE TIME", time.time() - start)
+#        print("CLOSE TIME", time.time() - start)
