@@ -9,8 +9,8 @@ class JacobianIK():
     def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
-        self.MAX_ITERATIONS = 500
-        self.MAX_STEP = .005
+        self.MAX_ITERATIONS = 100
+        self.MAX_STEP = .01
         self.STARTING_STEP = 1
         self.ERROR = .1
         self.lam = .1
@@ -121,9 +121,10 @@ class JacobianIK():
                 # print(delta_angles)
                 # print(target)
                 delta_angles *= 0.1 / avg_ang_change
+                # return b_found_better, None, count_iterations
                 # print(delta_angles)
             if delta_angles[0] == 0 and delta_angles[1] == 0:
-                return b_found_better, angles, count_iterations
+                return b_found_better, None, count_iterations
             # elif avg_ang_change < 0.000001:
             #    print(delta_angles)
             #    print("JACOBIAN TOO SMALL")
