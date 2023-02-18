@@ -13,7 +13,7 @@ class JacobianIKLIVE():
         # TODO: May 
         self.MAX_ITERATIONS = 1000
         self.MAX_STEP = .01
-        self.STARTING_STEP = .5
+        self.STARTING_STEP = 1
         self.ERROR = .1
 
         pass
@@ -103,7 +103,7 @@ class JacobianIKLIVE():
             #  returned from solve_jacobian will be really, really big. The while loop below will "fix" this, but this
             #  just shortcuts the whole problem. There are far, far better ways to deal with this
             avg_ang_change = np.linalg.norm(delta_angles)
-            if avg_ang_change > 100:
+            if avg_ang_change > .5:
                 #print("JACOBIAN TOO LARGE")
                 # print(delta_angles)
                 # print(target)
@@ -111,7 +111,9 @@ class JacobianIKLIVE():
                 # return b_found_better, None, count_iterations
                 # print(delta_angles)
             if delta_angles[0] == 0 and delta_angles[1] == 0:
-                return b_found_better, None, count_iterations
+                print("HERE")
+                #pass
+                #return b_found_better, None, count_iterations
             # elif avg_ang_change < 0.000001:
             #    print(delta_angles)
             #    print("JACOBIAN TOO SMALL")
@@ -129,8 +131,8 @@ class JacobianIKLIVE():
                 # Get the new distance with the new angles
                 self.finger_fk.set_joint_angles(new_angles)
                 new_dist = self.distance_to_goal(target)  
-                print(f"New: {new_dist}, Best dist: {best_distance}")
-                print(f"Angles: {delta_angles}")              
+                #print(f"New: {new_dist}, Best dist: {best_distance}")
+                #print(f"Angles: {delta_angles}")              
                 if new_dist > best_distance:
                     step_size *= 0.5
                 else:
