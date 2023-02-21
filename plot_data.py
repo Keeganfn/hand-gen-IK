@@ -79,10 +79,10 @@ def get_best_distance(paths, names, xys, distance_totals, projected_points, path
     inds_a = areas.argsort()
     sorted_areas = areas[inds_a]
     sorted_names_areas = n[inds_a]
-    print(sorted_distances[:nbest])
-    print(sorted_names[:nbest])
-    print(sorted_names_areas[:nbest])
-    print(sorted_areas[:nbest])
+    print(sorted_distances[-nbest:])
+    print(sorted_names[-nbest:])
+    print(sorted_names_areas[-nbest:])
+    print(sorted_areas[-nbest:])
 
     plt.scatter(sorted_names, sorted_distances)
     plt.title("Total Distances (Projected)")
@@ -102,10 +102,10 @@ def get_best_distance(paths, names, xys, distance_totals, projected_points, path
     nbest_xys = []
     nbest_name = []
     nbest_projected = []
-    for i in range(0, nbest):
-        nbest_xys.append(xys[inds[i]])
-        nbest_projected.append(projected_points[inds[i]])
-        nbest_name.append(sorted_names[i])
+    for i in range(1, nbest+1):
+        nbest_xys.append(xys[inds[-i]])
+        nbest_projected.append(projected_points[inds[-i]])
+        nbest_name.append(sorted_names[-i])
 
     print(nbest_name)
     plot_asterisk(paths, nbest_name, nbest_xys, path_directions, nbest_projected)
@@ -154,9 +154,10 @@ def load_all_paths():
 if __name__ == "__main__":
     paths, names = load_all_paths()
     test = [names[0], names[20]]
-    xys, path_directions = get_xys(paths, names)
-    projected_points, distances, distance_totals = get_total_distance(paths, names, xys, path_directions)
-    get_best_distance(paths, names, xys, distance_totals, projected_points, path_directions, 3)
+    xys, path_directions = get_xys(paths, test)
+    projected_points, distances, distance_totals = get_total_distance(paths, test, xys, path_directions)
+    #plot_asterisk(paths, test, xys, path_directions, projected_points)
+    get_best_distance(paths, test, xys, distance_totals, projected_points, path_directions, 2)
 
     #plot_asterisk(paths, test, xys, path_directions, projected_points)
 

@@ -16,23 +16,41 @@ class AsteriskController():
         self.distal_f1 = distal_f1
         self.distal_f2 = distal_f2
         self.f1_direction_dict = {
-            "N": np.array([0.015, .15]),
-            "NE": np.array([0.2, .2]),
-            "E": np.array([0.2, .1067]),
-            "SE": np.array([.2, 0]),
-            "S": np.array([0.015, .05]),
-            "SW": np.array([-0.17, 0]),
-            "W": np.array([-0.17, .1067]),
-            "NW": np.array([-0.17, .2])}
+            "N": np.array([0.015, .1567]),
+            "NE": np.array([0.065, .1567]),
+            "E": np.array([0.165, .1067]),
+            "SE": np.array([.165, -.0433]),
+            "S": np.array([0.015, -.0433]),
+            "SW": np.array([-0.135, -.0433]),
+            "W": np.array([-0.135, .1067]),
+            "NW": np.array([-0.035, .1567])}
         self.f2_direction_dict = {
-            "N": np.array([-0.015, .15]),
-            "NE": np.array([0.17, .2]),
-            "E": np.array([0.17, .1067]),
-            "SE": np.array([0.17, 0]),
-            "S": np.array([-0.015, .05]),
-            "SW": np.array([-0.2, 0]),
-            "W": np.array([-0.2, .1067]),
-            "NW": np.array([-0.2, .2])}
+            "N": np.array([-0.015, .1567]),
+            "NE": np.array([.035, .1567]),
+            "E": np.array([0.135, .1067]),
+            "SE": np.array([0.135, -.0433]),
+            "S": np.array([-0.015, -.0433]),
+            "SW": np.array([-0.165, -.0433]),
+            "W": np.array([-0.165, .1067]),
+            "NW": np.array([-0.065, .1567])}
+        # self.f1_direction_dict = {
+        #     "N": np.array([0.015, .15]),
+        #     "NE": np.array([0.215, .2]),
+        #     "E": np.array([0.2, .1067]),
+        #     "SE": np.array([.2, 0]),
+        #     "S": np.array([0.015, .05]),
+        #     "SW": np.array([-0.17, 0]),
+        #     "W": np.array([-0.17, .1067]),
+        #     "NW": np.array([-0.17, .2])}
+        # self.f2_direction_dict = {
+        #     "N": np.array([-0.015, .15]),
+        #     "NE": np.array([0.185, .2]),
+        #     "E": np.array([0.17, .1067]),
+        #     "SE": np.array([0.17, 0]),
+        #     "S": np.array([-0.015, .05]),
+        #     "SW": np.array([-0.2, 0]),
+        #     "W": np.array([-0.2, .1067]),
+        #     "NW": np.array([-0.2, .2])}
         self.trial_data = []
         # self.f1_direction_dict = {
         #     "N": np.array([0.01, .15]),
@@ -112,14 +130,15 @@ class AsteriskController():
             tsteps += 1
             p.stepSimulation()
 
-    def record(self):
-        temp = self.ik_f1.finger_fk.current_angles + self.ik_f1.finger_fk.current_angles
+    def record(self, ik_angles):
+        temp = self.ik_f1.finger_fk.current_angles + self.ik_f2.finger_fk.current_angles
         obj_pos = p.getBasePositionAndOrientation(self.cube_id)
         obj_pos1 = list(obj_pos[0])
         obj_pos1[1] -= .1067
         save_dict = {
             "obj_pos": obj_pos1,
             "obj_or": obj_pos[1],
+            "ik_angles": ik_angles,
             "joint_1": temp[0],
             "joint_2": temp[1],
             "joint_3": temp[2],
@@ -127,7 +146,7 @@ class AsteriskController():
         self.trial_data.append(save_dict)
 
     def save(self, name, direction, path):
-        #label = "data/" + direction + "_" + name + ".pkl"
+        # label = "data/" + direction + "_" + name + ".pkl"
         label = path + "/" + direction + "_" + name + ".pkl"
 
         with open(label, "wb+") as file:
@@ -222,7 +241,7 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f1)
             tsteps += 1
 
-            self.record()
+            self.record(angles_f1+angles_f2)
             p.stepSimulation()
 #        print("CLOSE TIME", time.time() - start, tsteps)
 
