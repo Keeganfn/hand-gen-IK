@@ -54,7 +54,7 @@
     <joint name="finger0_segment1_joint" type="revolute">
         <parent link="finger0_segment0"/>
         <child link="finger0_segment1"/>
-        <origin rpy="0 0 0" xyz="0 0.072 0"/>
+        <origin rpy="0 0 0" xyz="0 0.07200000000000001 0"/>
         <axis xyz="0 0 1"/>
         <limit effort="1000.0" lower="-3.14" upper="3.14" velocity="0.5"/>
     </joint>
@@ -98,7 +98,7 @@
     <joint name="finger1_segment1_joint" type="revolute">
         <parent link="finger1_segment0"/>
         <child link="finger1_segment1"/>
-        <origin rpy="0 0 0" xyz="0 0.072 0"/>
+        <origin rpy="0 0 0" xyz="0 0.07200000000000001 0"/>
         <axis xyz="0 0 1"/>
         <limit effort="1000.0" lower="-3.14" upper="3.14" velocity="0.5"/>
     </joint>

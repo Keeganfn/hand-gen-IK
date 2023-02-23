@@ -154,10 +154,10 @@ def load_all_paths():
 if __name__ == "__main__":
     paths, names = load_all_paths()
     test = [names[0], names[20]]
-    xys, path_directions = get_xys(paths, test)
-    projected_points, distances, distance_totals = get_total_distance(paths, test, xys, path_directions)
+    xys, path_directions = get_xys(paths, names)
+    projected_points, distances, distance_totals = get_total_distance(paths, names, xys, path_directions)
     #plot_asterisk(paths, test, xys, path_directions, projected_points)
-    get_best_distance(paths, test, xys, distance_totals, projected_points, path_directions, 2)
+    get_best_distance(paths, names, xys, distance_totals, projected_points, path_directions, 3)
 
     #plot_asterisk(paths, test, xys, path_directions, projected_points)
 

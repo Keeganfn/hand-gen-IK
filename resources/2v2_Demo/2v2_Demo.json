@@ -61,14 +61,14 @@
                 "segment_dimensions": [
                     0.032,
                     0.022,
-                    0.052
+                    0.067
                 ],
                 "segment_bottom_joint": {
                     "joint_style": "pin",
                     "joint_dimensions": [
                         0.032,
                         0.022,
-                        0.02
+                        0.005
                     ],
                     "joint_range": [
                         0,
@@ -81,7 +81,7 @@
                     "joint_dimensions": [
                         0.032,
                         0.022,
-                        0.02
+                        0.01
                     ],
                     "joint_range": [
                         0,
@@ -119,14 +119,14 @@
                 "segment_dimensions": [
                     0.032,
                     0.022,
-                    0.052
+                    0.067
                 ],
                 "segment_bottom_joint": {
                     "joint_style": "pin",
                     "joint_dimensions": [
                         0.032,
                         0.022,
-                        0.02
+                        0.005
                     ],
                     "joint_range": [
                         0,
@@ -162,14 +162,14 @@
                 "segment_dimensions": [
                     0.032,
                     0.022,
-                    0.052
+                    0.067
                 ],
                 "segment_bottom_joint": {
                     "joint_style": "pin",
                     "joint_dimensions": [
                         0.032,
                         0.022,
-                        0.02
+                        0.005
                     ],
                     "joint_range": [
                         0,
@@ -182,7 +182,7 @@
                     "joint_dimensions": [
                         0.032,
                         0.022,
-                        0.02
+                        0.01
                     ],
                     "joint_range": [
                         0,
@@ -220,27 +220,14 @@
                 "segment_dimensions": [
                     0.032,
                     0.022,
-                    0.052
+                    0.067
                 ],
                 "segment_bottom_joint": {
                     "joint_style": "pin",
                     "joint_dimensions": [
                         0.022,
                         0.032,
-                        0.02
-                    ],
-                    "joint_range": [
-                        0,
-                        180
-                    ],
-                    "joint_friction": "n/a"
-                },
-                "segment_top_joint": {
-                    "joint_style": "pin",
-                    "joint_dimensions": [
-                        0.032,
-                        0.022,
-                        0.02
+                        0.005
                     ],
                     "joint_range": [
                         0,

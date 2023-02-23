@@ -69,10 +69,13 @@ class ForwardKinematicsSIM():
         self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[0])[0])
         # Get the transformation from previous link to next link
         for i in range(1, len(self.current_poses)):
+            print(self.current_poses[i][0])
             mat_t = mh.create_translation_matrix(self.current_poses[i][0])
             mat_r = mh.create_rotation_matrix(p.getEulerFromQuaternion(self.current_poses[i][1])[2])
             # Since poses are in the global frame we need to find the matrix that takes us from previous to next using A@B.I
-            mat_t_link = mat_t @ np.linalg.inv(self.link_translations[-1])
+            #mat_t_link = mat_t @ np.linalg.inv(self.link_translations[-1])
+            mat_t_inv = mh.create_translation_matrix(self.current_poses[i-1][0])
+            mat_t_link = mat_t @ np.linalg.inv(mat_t_inv)
             mat_r_link = mat_r @ np.linalg.inv(self.link_rotations[-1])
             self.link_translations.append(mat_t_link)
             self.link_rotations.append(mat_r_link)
@@ -80,7 +83,9 @@ class ForwardKinematicsSIM():
             self.current_angles.append(p.getJointState(self.hand_id, self.link_ids[i])[0])
         self.original_ee_end = self.link_lengths[-1]
         self.link_rotations_original.reverse()
-        #print("DEBUG F1 STARTING Transforms: ", self.link_translations, self.link_rotations, self.current_angles)
+        print("DEBUG F1 STARTING Translation: ", self.link_translations)
+        print("DEBUG F1 STARTING Rotations: ", self.link_rotations)
+        print("DEBUG F1 STARTING Angles: ", self.current_angles)
 
     def set_joint_angles(self, angles):
         # sets the joint angles and updates rotation matrices
@@ -104,7 +109,7 @@ class ForwardKinematicsSIM():
         # debug adding link locations
         debug.append(link_location @ [0, 0, 1])
         self.cnt += 1
-        if self.cnt == 1:
+        if self.cnt == 20:
             self.cnt = 0
             # self.debug_show_link_positions(debug)
         # time.sleep(.1)

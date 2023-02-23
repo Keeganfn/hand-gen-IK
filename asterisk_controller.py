@@ -15,12 +15,31 @@ class AsteriskController():
         self.ik_f2 = ik_f2
         self.distal_f1 = distal_f1
         self.distal_f2 = distal_f2
+        # self.f1_direction_dict = {
+        #     "N": np.array([0.015, .158]),
+        #     "NE": np.array([0.065, .158]),
+        #     "E": np.array([0.165, .108]),
+        #     "SE": np.array([.165, -.0446]),
+        #     "S": np.array([0.013, -.0446]),
+        #     "SW": np.array([-0.135, -.0446]),
+        #     "W": np.array([-0.135, .108]),
+        #     "NW": np.array([-0.035, .1567])}
+        # self.f2_direction_dict = {
+        #     "N": np.array([-0.015, .158]),
+        #     "NE": np.array([.035, .158]),
+        #     "E": np.array([0.135, .108]),
+        #     "SE": np.array([0.135, -.0446]),
+        #     "S": np.array([-0.013, -.0446]),
+        #     "SW": np.array([-0.165, -.0446]),
+        #     "W": np.array([-0.165, .108]),
+        #     "NW": np.array([-0.065, .158])}
+
         self.f1_direction_dict = {
             "N": np.array([0.015, .1567]),
             "NE": np.array([0.065, .1567]),
             "E": np.array([0.165, .1067]),
             "SE": np.array([.165, -.0433]),
-            "S": np.array([0.015, -.0433]),
+            "S": np.array([0.013, -.0433]),
             "SW": np.array([-0.135, -.0433]),
             "W": np.array([-0.135, .1067]),
             "NW": np.array([-0.035, .1567])}
@@ -29,7 +48,7 @@ class AsteriskController():
             "NE": np.array([.035, .1567]),
             "E": np.array([0.135, .1067]),
             "SE": np.array([0.135, -.0433]),
-            "S": np.array([-0.015, -.0433]),
+            "S": np.array([-0.013, -.0433]),
             "SW": np.array([-0.165, -.0433]),
             "W": np.array([-0.165, .1067]),
             "NW": np.array([-0.065, .1567])}
@@ -130,19 +149,26 @@ class AsteriskController():
             tsteps += 1
             p.stepSimulation()
 
-    def record(self, ik_angles):
+    def record(self, ik_angles, d1, d2):
         temp = self.ik_f1.finger_fk.current_angles + self.ik_f2.finger_fk.current_angles
         obj_pos = p.getBasePositionAndOrientation(self.cube_id)
         obj_pos1 = list(obj_pos[0])
         obj_pos1[1] -= .1067
+        if not d1:
+            d1 = 1000
+        if not d2:
+            d2 = 1000
         save_dict = {
             "obj_pos": obj_pos1,
             "obj_or": obj_pos[1],
             "ik_angles": ik_angles,
+            "d1": d1,
+            "d2": d2,
             "joint_1": temp[0],
             "joint_2": temp[1],
             "joint_3": temp[2],
-            "joint_4": temp[3]}
+            "joint_4": temp[3],  
+            }
         self.trial_data.append(save_dict)
 
     def save(self, name, direction, path):
@@ -163,19 +189,19 @@ class AsteriskController():
         cp2_count = 0
         cp3_count = 0
         thresh = .005
-        while tsteps < 400:
+        while tsteps < 600:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .005))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .005))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .003))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .003))
             if debug:
                 self.show_points_debug(sub_target_f1)
                 self.show_points_debug(sub_target_f2)
 
-            contact_point_info1 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=1)
-            contact_point_info2 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=3)
+            contact_point_info1 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=self.distal_f1)
+            contact_point_info2 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=self.distal_f2)
             rot = p.getEulerFromQuaternion(p.getBasePositionAndOrientation(self.cube_id)[1])
-            if abs(rot[0]) > .1 or abs(rot[0]) > .1:
+            if abs(rot[0]) > .3 or abs(rot[0]) > .3:
                 print("ROTATION IS BAD")
                 break
             vel = p.getBaseVelocity(self.cube_id)[0]
@@ -216,8 +242,8 @@ class AsteriskController():
                 cp1_count = 0
                 t2 = mh.create_translation_matrix(contact_point_info2[-1][6])
                 f2 = mh.create_transformation_matrix(
-                    p.getLinkState(self.hand_id, 3)[0],
-                    p.getLinkState(self.hand_id, 3)[1])
+                    p.getLinkState(self.hand_id, self.distal_f2)[0],
+                    p.getLinkState(self.hand_id, self.distal_f2)[1])
                 cp2 = np.linalg.inv(f2) @ t2 @ [0, 0, 1]
                 found, angles_f2, it = self.ik_f2.calculate_ik(sub_target_f2, ee_location=cp2)
                 if not angles_f2:
@@ -227,12 +253,11 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f2)
 
             if contact_point_info1:
-                p.getClosestPoints(self.hand_id, self.cube_id, 2, linkIndexA=3)
                 cp2_count = 0
                 t1 = mh.create_translation_matrix(contact_point_info1[-1][6])
                 f1 = mh.create_transformation_matrix(
-                    p.getLinkState(self.hand_id, 1)[0],
-                    p.getLinkState(self.hand_id, 1)[1])
+                    p.getLinkState(self.hand_id, self.distal_f1)[0],
+                    p.getLinkState(self.hand_id, self.distal_f1)[1])
                 cp1 = np.linalg.inv(f1) @ t1 @ [0, 0, 1]
                 found, angles_f1, it = self.ik_f1.calculate_ik(sub_target_f1, ee_location=cp1)
                 if not angles_f1:
@@ -241,8 +266,9 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f1)
             tsteps += 1
 
-            self.record(angles_f1+angles_f2)
+            self.record(angles_f1+angles_f2, d1, d2)
             p.stepSimulation()
+            # time.sleep(.5)
 #        print("CLOSE TIME", time.time() - start, tsteps)
 
     def move_hand(self, direction, debug=False):

@@ -117,7 +117,6 @@ class JacobianIK():
             #  just shortcuts the whole problem. There are far, far better ways to deal with this
             avg_ang_change = np.linalg.norm(delta_angles)
             if avg_ang_change > 100:
-                #print("JACOBIAN TOO LARGE")
                 # print(delta_angles)
                 # print(target)
                 delta_angles *= 0.1 / avg_ang_change

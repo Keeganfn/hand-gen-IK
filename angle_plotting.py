@@ -24,6 +24,7 @@ def plot_joint_angles_delta(paths, names):
             j3_act = []
             j4_act = []
             for j in range(1, len(trial)):
+                print(trial[j]["d1"])
                 j1.append(trial[j]["ik_angles"][0] - trial[j-1]["ik_angles"][0])
                 j2.append(trial[j]["ik_angles"][1] - trial[j-1]["ik_angles"][1])
                 j3.append(trial[j]["ik_angles"][2] - trial[j-1]["ik_angles"][2])
@@ -127,4 +128,5 @@ def load_all_paths():
 
 if __name__ == "__main__":
     paths, names = load_all_paths()
-    plot_joint_angles(paths, names)
+    #plot_joint_angles(paths, names)
+    plot_joint_angles_delta(paths, names)
