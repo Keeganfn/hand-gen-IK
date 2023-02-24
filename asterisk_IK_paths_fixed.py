@@ -92,7 +92,7 @@ def get_paths():
 
 
 def setup_sim():
-    physics_client = p.connect(p.GUI)
+    physics_client = p.connect(p.DIRECT)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.setGravity(0, 0, -10)
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
@@ -107,10 +107,10 @@ def get_hand_paths():
 
     paths = []
     names = []
-    for file in os.listdir(current_path + "/generated_hands"):
+    for file in os.listdir(current_path + "/generated_hands_optimized_full"):
         print(str(file))
         print(len(names))
-        temp_str = current_path + "/generated_hands/" + str(file) + "/hand/" + str(file) + ".urdf"
+        temp_str = current_path + "/generated_hands_optimized_full/" + str(file) + "/hand/" + str(file) + ".urdf"
         paths.append(temp_str)
         names.append(str(file))
 
@@ -119,7 +119,7 @@ def get_hand_paths():
     names.pop(-1)
     print(len(names))
 
-    with open(current_path + "/generated_hands/hand_descriptions_test.json", "r+") as fp:
+    with open(current_path + "/generated_hands_optimized_full/hand_descriptions_optimization_full_asterisk.json", "r+") as fp:
         hand_descs = json.load(fp)
 
     while len(hand_descs) <= len(names):
@@ -160,7 +160,7 @@ def run_batch():
                 hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
             controller.close_hand()
             controller.move_hand2(directions[j])
-            data_p = current_path + "/data/" + trial_name
+            data_p = current_path + "/data_optimized_full/" + trial_name
             if not os.path.exists(data_p):
                 os.makedirs(data_p)
             controller.save(trial_name, directions[j], data_p)

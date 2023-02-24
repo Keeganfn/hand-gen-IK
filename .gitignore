@@ -1,0 +1,6 @@
+data/
+data_optimized_full/
+generated_hands/
+generated_hands_old/
+generated_hands_test/
+old_data/
