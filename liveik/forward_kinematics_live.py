@@ -43,15 +43,19 @@ class ForwardKinematicsLIVE():
         self.link_rotations.append(base_link_r)
         self.current_angles.append(0)
         # Get the transformation from previous link to next link
-        for i in range(1, len(self.link_lengths)):
+        for i in range(0, len(self.link_lengths)-1):
             mat_t = self.mh.create_translation_matrix(self.link_lengths[i])
+
+            #mat_t_link = mat_t @ np.linalg.inv(self.link_translations[-1])
+            #mat_t_inv = self.mh.create_translation_matrix(self.current_angles[i-1][0])
+            #mat_t_link = mat_t_link @ np.linalg.inv(mat_t)
             mat_r = self.mh.create_rotation_matrix(0)
             # Since poses are in the global frame we need to find the matrix that takes us from previous to next using A@B.I
             self.link_translations.append(mat_t)
             self.link_rotations.append(mat_r)
             self.current_angles.append(0)
         self.original_ee_end = self.link_lengths[-1]
-        #print(f"DEBUG\nLINK_TRANSLATIONS:\n{self.link_translations}\nLINK_ROTATIONS:\n{self.link_rotations}\nCURRENT_ANGLES:\n{self.current_angles}")
+        print(f"DEBUG\nLINK_TRANSLATIONS:\n{self.link_translations}\nLINK_ROTATIONS:\n{self.link_rotations}\nCURRENT_ANGLES:\n{self.current_angles}")
 
     def set_joint_angles(self, angles):
         # sets the joint angles and updates rotation matrices
