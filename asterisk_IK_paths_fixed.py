@@ -85,14 +85,17 @@ def get_paths():
     hand_path6 = current_path+"/resources/2v2_Demo_long/hand/2v2_Demo.urdf"
     hand_path7 = current_path+"/resources/2v2_Demo_elong/hand/2v2_Demo.urdf"
     hand_path8 = current_path+"/generated_hands/2v2_1.1_1.1_1.1_1.1/hand/2v2_1.1_1.1_1.1_1.1.urdf"
+    hand_path8 = current_path+"/generated_chosen/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540/hand/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540.urdf"
+    hand_path9 = current_path+"/generated_2v2_1.1/2v2_75.25_70.30_1.1_53/hand/2v2_75.25_70.30_1.1_53.urdf"
     cube_path = current_path + \
         "/resources/2v2_Demo/object/2v2_Demo_cuboid_small.urdf"
     data_path = current_path+"/data/"
-    return current_path, hand_path3, cube_path, data_path
+    return current_path, hand_path9, cube_path, data_path
 
 
 def setup_sim():
-    physics_client = p.connect(p.DIRECT)
+    physics_client = p.connect(p.GUI)
+
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.setGravity(0, 0, -10)
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
@@ -107,10 +110,10 @@ def get_hand_paths():
 
     paths = []
     names = []
-    for file in os.listdir(current_path + "/generated_hands_optimized_full"):
+    for file in os.listdir(current_path + "/generated_chosen"):
         print(str(file))
         print(len(names))
-        temp_str = current_path + "/generated_hands_optimized_full/" + str(file) + "/hand/" + str(file) + ".urdf"
+        temp_str = current_path + "/generated_chosen/" + str(file) + "/hand/" + str(file) + ".urdf"
         paths.append(temp_str)
         names.append(str(file))
 
@@ -119,7 +122,7 @@ def get_hand_paths():
     names.pop(-1)
     print(len(names))
 
-    with open(current_path + "/generated_hands_optimized_full/hand_descriptions_optimization_full_asterisk.json", "r+") as fp:
+    with open(current_path + "/generated_chosen/hand_descriptions_chosen.json", "r+") as fp:
         hand_descs = json.load(fp)
 
     while len(hand_descs) <= len(names):
@@ -132,6 +135,7 @@ def run_batch():
     setup_sim()
     hand_paths, hand_descs, names = get_hand_paths()
     print(len(names), len(hand_descs))
+    old_hand = ""
     for i in range(len(hand_paths)):
         directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
         current_path, _, cube_path, data_path = get_paths()
@@ -148,7 +152,10 @@ def run_batch():
                     print(hand_paths.pop(b))
                     t = True
                     break
-
+        if old_hand == trial_name:
+            return
+        else:
+            old_hand = trial_name
         for j in range(len(directions)):
             # get paths for data and sim objects
             # load hand
@@ -160,7 +167,7 @@ def run_batch():
                 hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
             controller.close_hand()
             controller.move_hand2(directions[j])
-            data_p = current_path + "/data_optimized_full/" + trial_name
+            data_p = current_path + "/data_chosen/" + trial_name
             if not os.path.exists(data_p):
                 os.makedirs(data_p)
             controller.save(trial_name, directions[j], data_p)
@@ -170,39 +177,43 @@ def run_batch():
 if __name__ == "__main__":
     # start pybullet
     # test()
-    run_batch()
-    # get_hand_paths()
-    # setup_sim()
+    # run_batch()
+    # # get_hand_paths()
+    setup_sim()
 
-    # directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    # start = time.time()
-    # for i in range(len(directions)):
-    #     # get paths for data and sim objects
-    #     current_path, hand_path, cube_path, data_path = get_paths()
-    #     # load hand
-    #     test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
-    #                  "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-    #     test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
-    #         "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
-    #     test_hand3 = {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]},
-    #                   "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
-    #     test_hand4 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}, "finger2": {
-    #         "name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
+    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    start = time.time()
+    for i in range(len(directions)):
+        # get paths for data and sim objects
+        current_path, hand_path, cube_path, data_path = get_paths()
+        # load hand
+        test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
+                     "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+        test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
+            "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
+        test_hand3 = {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]},
+                      "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
+        test_hand4 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}, "finger2": {
+            "name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
+        test_hand5 = {"name": "3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540", "sim": {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, 0.072, 0], [
+            0, 0.036, 0], [0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.0576, 0], [0, 0.0504, 0], [0, 0.036, 0]]}}}
+        test_hand6 = {"name": "2v2_75.25_70.30_1.1_53", "sim": {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.10799999999999998, 0], [
+            0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, 0.1008, 0], [0, 0.043199999999999995, 0]]}}}
 
-    #     hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand3, 1)
-    #     # load cube
-    #     cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand6["sim"], 1)
+        # load cube
+        cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
 
-    #     p.changeDynamics(cube_id, -1, restitution=.95, mass=5, lateralFriction=1)
+        p.changeDynamics(cube_id, -1, restitution=.95, mass=5, lateralFriction=1)
 
-    #     controller = asterisk_controller.AsteriskController(
-    #         hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
-    #     controller.close_hand()
-    #     # controller.close_hand2()
-    #     controller.move_hand2(directions[i])
-    #     data_p = current_path + "/data_angles"
-    #     controller.save("2v2_1.1_1.1_1.1_1.1", directions[i], data_p)
-    #     p.resetSimulation()
+        controller = asterisk_controller.AsteriskController(
+            hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+        controller.close_hand()
+        # controller.close_hand2()
+        controller.move_hand2(directions[i])
+        data_p = current_path + "/data_angles"
+        controller.save("2v2_1.1_1.1_1.1_1.1", directions[i], data_p)
+        p.resetSimulation()
 
     # print("END TIME", time.time() - start)
 

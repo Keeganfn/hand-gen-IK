@@ -1,6 +1,7 @@
 import numpy as np
 import pybullet as p
 import time
+from copy import deepcopy
 import math
 import matrix_helper as mh
 import pickle as pkl
@@ -151,6 +152,17 @@ class AsteriskController():
 
     def record(self, ik_angles, d1, d2):
         temp = self.ik_f1.finger_fk.current_angles + self.ik_f2.finger_fk.current_angles
+        j0 = temp[0]
+        j1 = temp[1]
+        j2 = temp[2]
+        j3 = temp[3]
+        j4 = None
+        j5 = None
+        if len(temp) == 5:
+            j4 = temp[4]
+        if len(temp) == 6:
+            j4 = temp[4]
+            j5 = temp[5]
         obj_pos = p.getBasePositionAndOrientation(self.cube_id)
         obj_pos1 = list(obj_pos[0])
         obj_pos1[1] -= .1067
@@ -164,12 +176,15 @@ class AsteriskController():
             "ik_angles": ik_angles,
             "d1": d1,
             "d2": d2,
-            "joint_1": temp[0],
-            "joint_2": temp[1],
-            "joint_3": temp[2],
-            "joint_4": temp[3],  
-            }
-        self.trial_data.append(save_dict)
+            "joint_1": j0,
+            "joint_2": j1,
+            "joint_3": j2,
+            "joint_4": j3,
+            "joint_5": j4,
+            "joint_6": j5,
+        }
+        # print(save_dict)
+        self.trial_data.append(deepcopy(save_dict))
 
     def save(self, name, direction, path):
         # label = "data/" + direction + "_" + name + ".pkl"
