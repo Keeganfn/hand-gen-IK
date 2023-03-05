@@ -1,6 +1,7 @@
 from .matrix_helper import MatrixHelp
 from .forward_kinematics_live import ForwardKinematicsLIVE
 import numpy as np
+from copy import deepcopy
 
 
 class JacobianIKLIVE():
@@ -12,8 +13,8 @@ class JacobianIKLIVE():
 
         # TODO: May 
         self.MAX_ITERATIONS = 1000
-        self.MAX_STEP = .01
-        self.STARTING_STEP = 1
+        self.MAX_STEP = .001
+        self.STARTING_STEP = .1
         self.ERROR = .1
 
         pass
@@ -78,7 +79,8 @@ class JacobianIKLIVE():
         b_found_better = False
         self.finger_fk.update_ee_end_point(ee_location)
         #self.finger_fk.update_angles_from_sim()
-        angles = self.finger_fk.current_angles.copy()
+        angles = deepcopy(self.finger_fk.current_angles)
+        angle_original = deepcopy(self.finger_fk.current_angles)
         best_distance = self.distance_to_goal(target)
         count_iterations = 0
         d_step = self.MAX_STEP        
@@ -149,4 +151,5 @@ class JacobianIKLIVE():
                 b_keep_going = False        
                 #self.finger_fk.update_angles_from_sim()
         # Return the new angles, and whether or not we ever found a better set of angles
+        #self.finger_fk.set_joint_angles(angle_original)
         return b_found_better, angles, count_iterations
