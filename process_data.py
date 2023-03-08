@@ -213,8 +213,52 @@ def plot_total_distances_NS(df):
 
 
 def plot_total_distances_compare_3v3(df, df2):
+    sorted_df = df.sort_values("total_distance")
+    df_3v3 = sorted_df[(sorted_df == "3v3").any(axis=1)]
+    sorted_df2 = df2.sort_values("total_distance")
+    df_3v32 = sorted_df2[(sorted_df2 == "3v3").any(axis=1)]
+    figure, axis = plt.subplots(1, 2)
+    axis[0].scatter(np.arange(len(df_3v3.index)), df_3v3["total_distance"], color="purple")
+    axis[0].set_title("Hand Distances 3v3  (Projected)")
+    axis[0].set_xlabel("Hands")
+    axis[0].set_ylabel("Total Distance (Meters)")
+    axis[0].set_ylim(.2, .65)
+    #axis[0].set_ylim(.02, .2)
+    axis[1].scatter(np.arange(len(df_3v32.index)), df_3v32["total_distance"], color="green")
+    axis[1].set_title("Hand Distances 3v3 Optimized (Projected)")
+    axis[1].set_xlabel("Hands")
+    axis[1].set_ylabel("Total Distance (Meters)")
+    axis[1].set_ylim(.2, .65)
+    #axis[1].set_ylim(.02, .2)
+    plt.show()
+
+
+def plot_total_EW_compare_3v3(df, df2):
+    df["EW_total_distance"] = df["E_max"] + df["W_max"]
+    df2["EW_total_distance"] = df2["E_max"] + df2["W_max"]
+    sorted_df = df.sort_values("EW_total_distance")
+    df_3v3 = sorted_df[(sorted_df == "3v3").any(axis=1)]
+    sorted_df2 = df2.sort_values("EW_total_distance")
+    df_3v32 = sorted_df2[(sorted_df2 == "3v3").any(axis=1)]
+    figure, axis = plt.subplots(1, 2)
+    axis[0].scatter(np.arange(len(df_3v3.index)), df_3v3["EW_total_distance"], color="purple")
+    axis[0].set_title("Hand Distances 3v3  (Projected)")
+    axis[0].set_xlabel("Hands")
+    axis[0].set_ylabel("Total Distance (Meters)")
+    #axis[0].set_ylim(.2, .65)
+    axis[0].set_ylim(.02, .4)
+    axis[1].scatter(np.arange(len(df_3v32.index)), df_3v32["EW_total_distance"], color="green")
+    axis[1].set_title("Hand Distances 3v3 Optimized (Projected)")
+    axis[1].set_xlabel("Hands")
+    axis[1].set_ylabel("Total Distance (Meters)")
+    #axis[1].set_ylim(.2, .65)
+    axis[1].set_ylim(.02, .4)
+    plt.show()
+
+
+def plot_total_NS_compare_3v3(df, df2):
     df["NS_total_distance"] = df["N_max"] + df["S_max"]
-    df2["NS_total_distance"] = df["N_max"] + df["S_max"]
+    df2["NS_total_distance"] = df2["N_max"] + df2["S_max"]
     sorted_df = df.sort_values("NS_total_distance")
     df_3v3 = sorted_df[(sorted_df == "3v3").any(axis=1)]
     sorted_df2 = df2.sort_values("NS_total_distance")
@@ -225,13 +269,13 @@ def plot_total_distances_compare_3v3(df, df2):
     axis[0].set_xlabel("Hands")
     axis[0].set_ylabel("Total Distance (Meters)")
     #axis[0].set_ylim(.2, .65)
-    axis[0].set_ylim(.02, .2)
+    axis[0].set_ylim(.02, .4)
     axis[1].scatter(np.arange(len(df_3v32.index)), df_3v32["NS_total_distance"], color="green")
     axis[1].set_title("Hand Distances 3v3 Optimized (Projected)")
     axis[1].set_xlabel("Hands")
     axis[1].set_ylabel("Total Distance (Meters)")
     #axis[1].set_ylim(.2, .65)
-    axis[1].set_ylim(.02, .2)
+    axis[1].set_ylim(.02, .4)
     plt.show()
 
 
@@ -280,7 +324,7 @@ def load_all_paths(path_name):
 
 
 def create_quickstats():
-    paths, names = load_all_paths(path_name="data_EW")
+    paths, names = load_all_paths(path_name="data_rerun3")
     # filter_late_contact(paths)
     indexing = {"N": 0, "NE": 1, "E": 2, "SE": 3, "S": 4, "SW": 5, "W": 6, "NW": 7}
     hand_quickstats = []
@@ -306,7 +350,7 @@ def create_quickstats():
                       columns=["name", "type", "f0", "f1", "f1:f0", "palm_width", "E_max", "E_point", "NE_max",
                                "NE_point", "NW_max", "NW_point", "N_max", "N_point", "SE_max", "SE_point", "SW_max",
                                "SW_point", "S_max", "S_point", "W_max", "W_point", "total_distance", "total_area"])
-    df.to_pickle("quickstats_optimized_EW.pkl")
+    df.to_pickle("quickstats_rerun3.pkl")
     print(df)
 
 
@@ -388,16 +432,19 @@ def get_links(row):
 
 if __name__ == "__main__":
     paths, names = load_all_paths(path_name="data")
-    paths2, names2 = load_all_paths(path_name="data_optimized_full")
-    paths3, names3 = load_all_paths(path_name="data_optimized_NS")
-    paths4, names4 = load_all_paths(path_name="live_data")
-    paths5, names5 = load_all_paths(path_name="data_EW")
+    paths2, names2 = load_all_paths(path_name="data_rerun3")
+    # paths2, names2 = load_all_paths(path_name="data_optimized_full")
+    # paths3, names3 = load_all_paths(path_name="data_optimized_NS")
+    # paths4, names4 = load_all_paths(path_name="live_data")
+    # paths5, names5 = load_all_paths(path_name="data_EW")
     #plot_asterisk(paths4, "2v3_25.75_25.35.40_1.1_53")
-    create_quickstats()
+    # create_quickstats()
     df = pd.read_pickle("quickstats.pkl")
-    df2 = pd.read_pickle("quickstats_optimized_full.pkl")
+    df2 = pd.read_pickle("quickstats_rerun3.pkl")
+    df2.to_csv("quickstats_rerun3.csv")
+    #df2 = pd.read_pickle("quickstats_optimized_full.pkl")
     #df2 = pd.read_pickle("quickstats_optimized_NS.pkl")
-    df3 = pd.read_pickle("quickstats_optimized_EW.pkl")
+    #df3 = pd.read_pickle("quickstats_optimized_EW.pkl")
     # print(df2)
     # df_2v2 = df[(df == "2v2").any(axis=1)]
     # df_2v3 = df[(df == "2v3").any(axis=1)]
@@ -413,17 +460,89 @@ if __name__ == "__main__":
 
     #test1 = df[(df["type"] == "2v2") & (df["f1:f0"] == "1.0.9")]
     # print(test1)
-    # plot_total_distances(df2)
+    plot_total_distances(df)
+    plot_total_distances(df2)
     # plot_total_distances_NS(df)
     # plot_total_distances_NS(df2)
-    plot_total_distances_compare_3v3(df, df3)
-    #best, info = get_top_NS(df)
-    #best, info = get_top_EW(df)
+    plot_total_distances_compare_3v3(df, df2)
+    plot_total_NS_compare_3v3(df, df2)
+    plot_total_EW_compare_3v3(df, df2)
+
+    print(df[df["name"] == "2v2_50.50_50.50_1.1_73"])
+    # best, info = get_top_NS(df)
+    # #best, info = get_top_EW(df)
+    # pd.set_option('display.max_rows', 30)
+    # hand_1 = df[df["name"] == "3v3_50.25.25_45.30.25_1.1_53"]
+    # hand_2 = df[df["name"] == "2v2_50.50_50.50_1.1_63"]
+    # hand_3 = df[df["name"] == "3v3_50.25.25_25.45.30_1.1_63"]
+    # hand_4 = df[df["name"] == "2v2_25.75_25.75_1.1_53"]
+    # hand_5 = df[df["name"] == "3v3_50.25.25_30.30.40_0.9.1_63"]
+    # hand_6 = df[df["name"] == "2v2_70.30_50.50_0.9.1_53"]
+    # hand_7 = df[df["name"] == "2v3_25.75_25.35.40_1.1_53"]
+    # result = pd.concat([hand_1, hand_2, hand_3, hand_4, hand_5, hand_6, hand_7])
+    # print(result)
+    # result.to_csv("chosen_hands.csv")
+
+    print("Top 2v2 Rerun")
+    test_2v2 = df2[df2["type"] == "2v2"]
+    get_top_full_asterisk(test_2v2)
+    print("Top 2v2 Original")
+    test_2v2 = df[df["type"] == "2v2"]
+    get_top_full_asterisk(test_2v2)
+    print("Top 2v3 RERUN")
+    test_2v2 = df2[df2["type"] == "2v3"]
+    get_top_full_asterisk(test_2v2)
+    print("Top 2v3 Original")
+    test_2v2 = df[df["type"] == "2v3"]
+    get_top_full_asterisk(test_2v2)
+
+    #test_2v2 = df[df["type"] == "2v3"]
+    # get_top_full_asterisk(test_2v2)
+    # test_2v3 = df[df["type"] == "2v3"]
+    # test_3v3 = df[df["type"] == "3v3"]
+    #print("2v2 MAX", test_2v2["total_distance"].max())
+    # print("2v2 MIN", test_2v2["total_distance"].min())
+    # print("2v3 MAX", test_2v3["total_distance"].max())
+    # print("2v3 MAX", test_2v3["total_distance"].min())
+    # print("3v3 MAX", test_3v3["total_distance"].max())
+    # print("3v3 MAX", test_3v3["total_distance"].min())
+    print("ASTERISK RERUN")
+    best, info = get_top_full_asterisk(df2)
+    print("ASTERISK ORIGINAL")
+    best, info = get_top_full_asterisk(df)
+
+    print("EW ORIGINAL")
+    best, info = get_top_EW(df)
+    print("EW RERUN")
+    best, info = get_top_EW(df2)
+    print("NS ORIGINAL")
+    best, info = get_top_NS(df)
+    print("NS RERUN")
+    best, info = get_top_NS(df2)
+    best, info = get_bottom_full_asterisk(df2)
+    print("BOTTOM 2v2 Rerun")
+    test_2v2 = df2[df2["type"] == "2v2"]
+    get_bottom_full_asterisk(test_2v2)
+
     # plot_total_distances_EW(df)
     #best, info = get_top_full_asterisk(df2)
     # best, info = get_top_full_asterisk(df2)
     #best, info = get_top_EW(df)
+    hand_1 = df2[df2["name"] == "3v3_50.25.25_45.30.25_1.1_53"]
+    hand_2 = df2[df2["name"] == "2v2_50.50_50.50_1.1_63"]
+    hand_3 = df2[df2["name"] == "3v3_50.25.25_25.45.30_1.1_63"]
+    hand_4 = df2[df2["name"] == "2v2_25.75_25.75_1.1_53"]
+    hand_5 = df2[df2["name"] == "3v3_50.25.25_30.30.40_0.9.1_63"]
+    hand_6 = df2[df2["name"] == "2v2_70.30_50.50_0.9.1_53"]
+    hand_7 = df2[df2["name"] == "2v3_25.75_25.35.40_1.1_53"]
+    result = pd.concat([hand_1, hand_2, hand_3, hand_4, hand_5, hand_6, hand_7])
+    print(result)
+    result.to_csv("chosen_hands.csv")
 
+    hand_1 = df2[df2["name"] == "3v3_45.30.25_40.30.30_0.9.1_53"]
+    hand_2 = df2[df2["name"] == "3v3_30.45.25_35.40.25_1.1_53"]
+    result = pd.concat([hand_1, hand_2])
+    print(result)
     #best, info = get_top_full_asterisk(df)
     # print(df.median()["total_distance"])
     # print(df.loc[df['total_distance'] == df['total_distance'].median()])
@@ -431,8 +550,8 @@ if __name__ == "__main__":
     # print(df[df['total_distance'] > df['total_distance'].median()].iloc[0])
     # print(df[df['total_distance'] < df['total_distance'].median()].iloc[-1])
 
-    test = df[df["type"] == "2v2"]
-    get_top_full_asterisk(test)
+    #test = df[df["type"] == "2v2"]
+    # get_top_full_asterisk(test)
     #test["links"] = test.apply(lambda row: get_links(row), axis=1)
     # print(test["total_distance"].describe())
     #plot_correlation(test["links"].tolist(), test["total_distance"].tolist(), test["f1:f0"].tolist())
@@ -444,10 +563,10 @@ if __name__ == "__main__":
     # best, info = get_top_EW(df)
     # best, info = get_top_NS(df)
 
-    total = []
-    for i in range(len(info)):
-        total.append(list(info[i]))
-    print(total)
+    # total = []
+    # for i in range(len(info)):
+    #     total.append(list(info[i]))
+    # print(total)
 
     # for i in best:
-    #     plot_asterisk(paths, i)
+    #    plot_asterisk(paths, i)

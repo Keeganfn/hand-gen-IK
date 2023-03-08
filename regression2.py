@@ -35,34 +35,34 @@ if __name__ == "__main__":
     name = []
     for i in data:
         if i["sim"]["finger1"]["num_links"] == 3 and i["sim"]["finger2"]["num_links"] == 3:
-            if float(df.loc[df["name"] == i["name"]]["palm_width"].values[0]) == 535:
-                l0.append(float(i["sim"]["finger1"]["link_lengths"][0][1]*100))
-                l1.append(float(i["sim"]["finger1"]["link_lengths"][1][1]*100))
-                l2.append(float(i["sim"]["finger1"]["link_lengths"][2][1]*100))
-                l3.append(float(i["sim"]["finger2"]["link_lengths"][0][1]*100))
-                l4.append(float(i["sim"]["finger2"]["link_lengths"][1][1]*100))
-                l5.append(float(i["sim"]["finger2"]["link_lengths"][2][1]*100))
-                distances.append(float(df.loc[df["name"] == i["name"]]["total_distance"].values[0]*100))
-                palm.append(float(df.loc[df["name"] == i["name"]]["palm_width"].values[0]))
-                name.append(i["name"])
-                if distances[-1] < 35:
-                    print(i["name"])
+            # if float(df.loc[df["name"] == i["name"]]["palm_width"].values[0]) == 535:
+            l0.append(float(i["sim"]["finger1"]["link_lengths"][0][1]*100))
+            l1.append(float(i["sim"]["finger1"]["link_lengths"][1][1]*100))
+            l2.append(float(i["sim"]["finger1"]["link_lengths"][2][1]*100))
+            l3.append(float(i["sim"]["finger2"]["link_lengths"][0][1]*100))
+            l4.append(float(i["sim"]["finger2"]["link_lengths"][1][1]*100))
+            l5.append(float(i["sim"]["finger2"]["link_lengths"][2][1]*100))
+            distances.append(float(df.loc[df["name"] == i["name"]]["total_distance"].values[0]*100))
+            palm.append(float(df.loc[df["name"] == i["name"]]["palm_width"].values[0]))
+            name.append(i["name"])
+            if distances[-1] < 35:
+                print(i["name"])
 
-    plt.scatter(l0, distances)
-    plt.show()
-    plt.scatter(l1, distances)
-    plt.show()
-    plt.scatter(l2, distances)
-    plt.show()
-    plt.scatter(l3, distances)
-    plt.show()
-    plt.scatter(l4, distances)
-    plt.show()
-    plt.scatter(l5, distances)
-    plt.show()
+    # plt.scatter(l0, distances)
+    # plt.show()
+    # plt.scatter(l1, distances)
+    # plt.show()
+    # plt.scatter(l2, distances)
+    # plt.show()
+    # plt.scatter(l3, distances)
+    # plt.show()
+    # plt.scatter(l4, distances)
+    # plt.show()
+    # plt.scatter(l5, distances)
+    # plt.show()
 
-    plt.scatter(palm, distances)
-    plt.show()
+    # plt.scatter(palm, distances)
+    # plt.show()
 
     # plt.scatter(l3, distances)
 
@@ -73,23 +73,26 @@ if __name__ == "__main__":
     colors = []
     for i in range(len(l0)):
         #combined.append((l2[i] + l5[i]) / (l0[i] + l1[i] + l3[i] + l4[i]))
-        combined.append((l2[i] + l5[i] + l1[i] + l4[i]) / (l0[i] + l3[i]))
+        combined.append((l2[i] + l5[i]) / (l0[i] + l3[i]))
+        #combined.append((l0[i] + l3[i]) / (l2[i] + l5[i] + l1[i] + l4[i]))
+        #combined.append((l2[i] + l4[i]) / (l1[i] + l5[i] + l1[i] + l3[i]))
+        #combined.append((l2[i] + l5[i] + l1[i] + l4[i]) / (l0[i] + l3[i]))
         #combined.append((l1[i]/l2[i]) / (l0[i]/l3[i]))
         # combined.append((l1[i]/l0[i]) * (l2[i]/l3[i]))
         # combined.append(((l1[i] + l3[i])/2) / ((l2[i] + l0[i])/2))
         # combined.append((l1[i]/l0[i]) + (l3[i]/l2[i]))
         # colors.append(((l1[i]/l2[i]) / (l3[i]/l0[i])))
         # colors.append(min((l1[i]/l0[i]) * (l2[i]/l3[i]), (l3[i]/l2[i]) / (l1[i]/l0[i])))
-        if combined[-1] < .5 and distances[i] < 40:
-            print("HERe", name[i], l0[i], l1[i], l2[i], l3[i])
+        # if combined[-1] < .5 and distances[i] < 40:
+        #    print("HERe", name[i], l0[i], l1[i], l2[i], l3[i])
         # colors.append((l1[i] + l3[i]) / 2)
         # colors.append((min(l0[i]/l1[i], l1[i]/l0[i]) + min(l2[i]/l3[i], l3[i]/l2[i])) / 2)
         # colors.append((max(1, max(l0[i]-l1[i], l1[i]-l0[i])) * max(1, (max(l2[i]-l3[i], l3[i]-l2[i])))))
         # colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
         #colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
-        colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
+        #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
         #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i])))
-        # colors.append((max(l1[i]/l0[i], l3[i]/l2[i]) / min(l0[i]/l1[i], l2[i]/l3[i])))
+        colors.append(0)
         # colors.append((max(l1[i], l3[i])))
         # colors.append((l1[i] / l2[i]) + (l3[i] / l0[i]))
         # colors.append(((l1[i]/l2[i]) / (l0[i]/l3[i])) * ((l1[i]/l0[i]) + (l3[i]/l2[i])))
@@ -101,7 +104,7 @@ if __name__ == "__main__":
     plt.scatter(combined, distances)
     plt.show()
 
-    colors = NormalizeData(np.array(colors))
+    #colors = NormalizeData(np.array(colors))
     print(colors)
 
     combined_keep = deepcopy(combined)

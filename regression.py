@@ -81,7 +81,7 @@ if __name__ == "__main__":
         # combined.append((l1[i]/l0[i]) * (l2[i]/l3[i]))
         # combined.append(((l1[i] + l3[i])/2) / ((l2[i] + l0[i])/2))
         # combined.append((l1[i]/l0[i]) + (l3[i]/l2[i]))
-        # colors.append(((l1[i]/l2[i]) / (l3[i]/l0[i])))
+        colors.append(((l1[i]/l0[i]) / (l3[i]/l1[i])))
         # colors.append(min((l1[i]/l0[i]) * (l2[i]/l3[i]), (l3[i]/l2[i]) / (l1[i]/l0[i])))
         if combined[-1] < .5 and distances[i] < 40:
             print("HERe", name[i], l0[i], l1[i], l2[i], l3[i])
@@ -90,7 +90,8 @@ if __name__ == "__main__":
         # colors.append((max(1, max(l0[i]-l1[i], l1[i]-l0[i])) * max(1, (max(l2[i]-l3[i], l3[i]-l2[i])))))
         # colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
         #colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
-        colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
+        #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
+        #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
         #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i])))
         # colors.append((max(l1[i]/l0[i], l3[i]/l2[i]) / min(l0[i]/l1[i], l2[i]/l3[i])))
         # colors.append((max(l1[i], l3[i])))

@@ -11,3 +11,11 @@ data_optimized_NS/
 generated_hands_optimized_full/
 generated_2v2_1.1/
 data_2v2_1.1/
+chosen_hands.csv
+data_rerun/
+data_rerun2/
+data_rerun3/
+quickstats_rerun.pkl
+quickstats_rerun2.pkl
+quickstats_rerun3.csv
+quickstats_rerun3.pkl

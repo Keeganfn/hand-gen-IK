@@ -9,7 +9,7 @@ class JacobianIK():
     def __init__(self, hand_id, finger_info) -> None:
         # Get forward IK info for each finger
         self.finger_fk = forward_kinematics.ForwardKinematicsSIM(hand_id, finger_info)
-        self.MAX_ITERATIONS = 100
+        self.MAX_ITERATIONS = 200
         self.MAX_STEP = .01
         self.STARTING_STEP = 1
         self.ERROR = .1
@@ -153,7 +153,7 @@ class JacobianIK():
                 count_iterations += 1
 
             # We can stop if we're close to the goal
-            if np.isclose(best_distance, 0, atol=1e-3):
+            if np.isclose(best_distance, 0, atol=1e-4):
                 b_keep_going = False
 
             # End conditions - b_one_step is true  - don't do another round
