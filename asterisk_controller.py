@@ -45,24 +45,24 @@ class AsteriskController():
             "W": np.array([-0.2, .1067]),
             "NW": np.array([-0.1414, .2481])}
 
-        # self.f1_direction_dict = {
-        #     "N": np.array([0.015, .1567]),
-        #     "NE": np.array([0.065, .1567]),
-        #     "E": np.array([0.165, .1067]),
-        #     "SE": np.array([.165, -.0433]),
-        #     "S": np.array([0.013, -.0433]),
-        #     "SW": np.array([-0.135, -.0433]),
-        #     "W": np.array([-0.135, .1067]),
-        #     "NW": np.array([-0.035, .1567])}
-        # self.f2_direction_dict = {
-        #     "N": np.array([-0.015, .1567]),
-        #     "NE": np.array([.035, .1567]),
-        #     "E": np.array([0.135, .1067]),
-        #     "SE": np.array([0.135, -.0433]),
-        #     "S": np.array([-0.013, -.0433]),
-        #     "SW": np.array([-0.165, -.0433]),
-        #     "W": np.array([-0.165, .1067]),
-        #     "NW": np.array([-0.065, .1567])}
+        self.f1_direction_dict = {
+            "N": np.array([0.015, .1567]),
+            "NE": np.array([0.065, .1567]),
+            "E": np.array([0.165, .1067]),
+            "SE": np.array([.165, -.0433]),
+            "S": np.array([0.013, -.0433]),
+            "SW": np.array([-0.135, -.0433]),
+            "W": np.array([-0.135, .1067]),
+            "NW": np.array([-0.035, .1567])}
+        self.f2_direction_dict = {
+            "N": np.array([-0.015, .1567]),
+            "NE": np.array([.035, .1567]),
+            "E": np.array([0.135, .1067]),
+            "SE": np.array([0.135, -.0433]),
+            "S": np.array([-0.013, -.0433]),
+            "SW": np.array([-0.165, -.0433]),
+            "W": np.array([-0.165, .1067]),
+            "NW": np.array([-0.065, .1567])}
         # self.f1_direction_dict = {
         #     "N": np.array([0.015, .15]),
         #     "NE": np.array([0.215, .2]),
@@ -156,8 +156,8 @@ class AsteriskController():
         while tsteps < 100000:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal_orig(start_f1, target_f1, .001))
-            sub_target_f2 = np.array(self.step_towards_goal_orig(start_f2, target_f2, .001))
+            sub_target_f1 = np.array(self.step_towards_goal_orig(start_f1, target_f1, .005))
+            sub_target_f2 = np.array(self.step_towards_goal_orig(start_f2, target_f2, .005))
 
             if debug:
                 self.show_points_debug(sub_target_f1)
@@ -237,17 +237,17 @@ class AsteriskController():
         cp2_count = 0
         cp3_count = 0
         thresh = .005
-        while tsteps < 1200:
+        while tsteps < 700:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .001))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .001))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .003))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .003))
             if debug:
                 self.show_points_debug(sub_target_f1)
                 self.show_points_debug(sub_target_f2)
 
-            contact_point_info1 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=self.distal_f1)
-            contact_point_info2 = p.getClosestPoints(self.hand_id, self.cube_id, .003, linkIndexA=self.distal_f2)
+            contact_point_info1 = p.getClosestPoints(self.hand_id, self.cube_id, .002, linkIndexA=self.distal_f1)
+            contact_point_info2 = p.getClosestPoints(self.hand_id, self.cube_id, .002, linkIndexA=self.distal_f2)
             rot = p.getEulerFromQuaternion(p.getBasePositionAndOrientation(self.cube_id)[1])
             if abs(rot[0]) > .3 or abs(rot[0]) > .3:
                 print("ROTATION IS BAD")
@@ -331,8 +331,8 @@ class AsteriskController():
         while tsteps < 1000:
             start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
             start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .002))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .002))
+            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .003))
+            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .003))
             if debug:
                 self.show_points_debug(sub_target_f1)
                 self.show_points_debug(sub_target_f2)

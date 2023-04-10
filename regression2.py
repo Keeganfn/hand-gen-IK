@@ -21,7 +21,7 @@ def NormalizeData(data):
 if __name__ == "__main__":
     f = open("hand_descriptions_test.json")
     data = json.load(f)
-    df = pd.read_pickle("quickstats.pkl")
+    df = pd.read_pickle("quickstats_rerun4.pkl")
 
     l0 = []
     l1 = []
@@ -72,12 +72,14 @@ if __name__ == "__main__":
     combined = []
     colors = []
     for i in range(len(l0)):
-        #combined.append((l2[i] + l5[i]) / (l0[i] + l1[i] + l3[i] + l4[i]))
-        combined.append((l2[i] + l5[i]) / (l0[i] + l3[i]))
-        #combined.append((l0[i] + l3[i]) / (l2[i] + l5[i] + l1[i] + l4[i]))
-        #combined.append((l2[i] + l4[i]) / (l1[i] + l5[i] + l1[i] + l3[i]))
-        #combined.append((l2[i] + l5[i] + l1[i] + l4[i]) / (l0[i] + l3[i]))
-        #combined.append((l1[i]/l2[i]) / (l0[i]/l3[i]))
+        combined.append((l2[i] + l5[i]) / (l0[i] + l1[i] + l3[i] + l4[i]))
+        colors.append(min(((l2[i])/(l0[i]+l1[i])) * ((l3[i] + l4[i])/(l5[i])),
+                      ((l0[i]+l1[i])/(l2[i])) * ((l5[i]/(l3[i] + l4[i])))))
+        # combined.append((l2[i] + l5[i]) / (l0[i] + l3[i]))
+        # combined.append((l0[i] + l3[i]) / (l2[i] + l5[i] + l1[i] + l4[i]))
+        # combined.append((l2[i] + l4[i]) / (l1[i] + l5[i] + l1[i] + l3[i]))
+        # combined.append((l2[i] + l5[i] + l1[i] + l4[i]) / (l0[i] + l3[i]))
+        # combined.append((l1[i]/l2[i]) / (l0[i]/l3[i]))
         # combined.append((l1[i]/l0[i]) * (l2[i]/l3[i]))
         # combined.append(((l1[i] + l3[i])/2) / ((l2[i] + l0[i])/2))
         # combined.append((l1[i]/l0[i]) + (l3[i]/l2[i]))
@@ -89,10 +91,10 @@ if __name__ == "__main__":
         # colors.append((min(l0[i]/l1[i], l1[i]/l0[i]) + min(l2[i]/l3[i], l3[i]/l2[i])) / 2)
         # colors.append((max(1, max(l0[i]-l1[i], l1[i]-l0[i])) * max(1, (max(l2[i]-l3[i], l3[i]-l2[i])))))
         # colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
-        #colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
-        #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
-        #colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i])))
-        colors.append(0)
+        # colors.append(max(l0[i]/l1[i], l1[i]/l0[i], l3[i]/l2[i], l2[i]/l3[i]))
+        # colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i]))/2)
+        # colors.append((max(l0[i]/l1[i], l1[i]/l0[i]) + max(l3[i]/l2[i], l2[i]/l3[i])))
+        # colors.append(0)
         # colors.append((max(l1[i], l3[i])))
         # colors.append((l1[i] / l2[i]) + (l3[i] / l0[i]))
         # colors.append(((l1[i]/l2[i]) / (l0[i]/l3[i])) * ((l1[i]/l0[i]) + (l3[i]/l2[i])))
@@ -104,7 +106,7 @@ if __name__ == "__main__":
     plt.scatter(combined, distances)
     plt.show()
 
-    #colors = NormalizeData(np.array(colors))
+    # colors = NormalizeData(np.array(colors))
     print(colors)
 
     combined_keep = deepcopy(combined)

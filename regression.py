@@ -23,7 +23,7 @@ if __name__ == "__main__":
     data = json.load(f)
     f = open("hand_descriptions_batch_2v2_1.1.json")
     data2 = json.load(f)
-    df = pd.read_pickle("quickstats.pkl")
+    df = pd.read_pickle("quickstats_rerun4.pkl")
 
     l0 = []
     l1 = []
@@ -81,7 +81,8 @@ if __name__ == "__main__":
         # combined.append((l1[i]/l0[i]) * (l2[i]/l3[i]))
         # combined.append(((l1[i] + l3[i])/2) / ((l2[i] + l0[i])/2))
         # combined.append((l1[i]/l0[i]) + (l3[i]/l2[i]))
-        colors.append(((l1[i]/l0[i]) / (l3[i]/l1[i])))
+        #colors.append(((l1[i]/l0[i]) * (l2[i]/l3[i])))
+        colors.append(min((l1[i]/l0[i]) * (l2[i]/l3[i]), ((l0[i]/l1[i]) * (l3[i]/l2[i]))))
         # colors.append(min((l1[i]/l0[i]) * (l2[i]/l3[i]), (l3[i]/l2[i]) / (l1[i]/l0[i])))
         if combined[-1] < .5 and distances[i] < 40:
             print("HERe", name[i], l0[i], l1[i], l2[i], l3[i])
@@ -99,14 +100,14 @@ if __name__ == "__main__":
         # colors.append(((l1[i]/l2[i]) / (l0[i]/l3[i])) * ((l1[i]/l0[i]) + (l3[i]/l2[i])))
         # colors.append((l1[i]/l0[i]) * (l2[i]/l3[i]))
         # colors.append(((l1[i]/l2[i]) / (l0[i]/l3[i])) * ((l1[i]/l0[i]) + (l3[i]/l2[i])))
-        # colors.append((min(l0[i]/l1[i], l1[i]/l0[i]) + min(l2[i]/l3[i], l3[i]/l2[i])) / 2)
+        #colors.append((min(l0[i]/l1[i], l1[i]/l0[i]) + min(l2[i]/l3[i], l3[i]/l2[i])) / 2)
         # colors.append((l0[i]/l1[i] + l2[i]/l3[i]) / 2)
         # colors.append((l1[i] -  + l3[i]/(l3[i]+l2[i])) / 2)
     plt.scatter(combined, distances)
     plt.show()
 
-    colors = NormalizeData(np.array(colors))
-    print(colors)
+    #colors = NormalizeData(np.array(colors))
+    # print(colors)
 
     combined_keep = deepcopy(combined)
     distances_keep = deepcopy(distances)

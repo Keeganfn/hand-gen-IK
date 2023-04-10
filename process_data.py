@@ -69,7 +69,7 @@ def plot_asterisk(paths, name):
         with open(paths[name][trial], 'rb') as f:
             trial_data = pkl.load(f)
             #trial_data, x, y = filter_late_contact(trial_data)
-            trial_data, x, y, _, point_projected_max = filter_path_deviation(trial_data, trial, threshold=1)
+            trial_data, x, y, _, point_projected_max = filter_path_deviation(trial_data, trial, threshold=.01)
             projected_points[indexing[trial]] = point_projected_max
             plt.plot(x, y, linewidth=3, color=colors[indexing[trial]])
     pgon = Polygon(projected_points)
@@ -324,7 +324,7 @@ def load_all_paths(path_name):
 
 
 def create_quickstats():
-    paths, names = load_all_paths(path_name="data_rerun3")
+    paths, names = load_all_paths(path_name="data_rerun4")
     # filter_late_contact(paths)
     indexing = {"N": 0, "NE": 1, "E": 2, "SE": 3, "S": 4, "SW": 5, "W": 6, "NW": 7}
     hand_quickstats = []
@@ -350,7 +350,7 @@ def create_quickstats():
                       columns=["name", "type", "f0", "f1", "f1:f0", "palm_width", "E_max", "E_point", "NE_max",
                                "NE_point", "NW_max", "NW_point", "N_max", "N_point", "SE_max", "SE_point", "SW_max",
                                "SW_point", "S_max", "S_point", "W_max", "W_point", "total_distance", "total_area"])
-    df.to_pickle("quickstats_rerun3.pkl")
+    df.to_pickle("quickstats_rerun4.pkl")
     print(df)
 
 
@@ -431,8 +431,12 @@ def get_links(row):
 
 
 if __name__ == "__main__":
+    # paths, names = load_all_paths(path_name="data_angles")
+    # for i in names:
+    #     plot_asterisk(paths, i)
+
     paths, names = load_all_paths(path_name="data")
-    paths2, names2 = load_all_paths(path_name="data_rerun3")
+    paths2, names2 = load_all_paths(path_name="data_rerun4")
     # paths2, names2 = load_all_paths(path_name="data_optimized_full")
     # paths3, names3 = load_all_paths(path_name="data_optimized_NS")
     # paths4, names4 = load_all_paths(path_name="live_data")
@@ -440,8 +444,8 @@ if __name__ == "__main__":
     #plot_asterisk(paths4, "2v3_25.75_25.35.40_1.1_53")
     # create_quickstats()
     df = pd.read_pickle("quickstats.pkl")
-    df2 = pd.read_pickle("quickstats_rerun3.pkl")
-    df2.to_csv("quickstats_rerun3.csv")
+    df2 = pd.read_pickle("quickstats_rerun4.pkl")
+    # df.to_csv("quickstats_rerun4.csv")
     #df2 = pd.read_pickle("quickstats_optimized_full.pkl")
     #df2 = pd.read_pickle("quickstats_optimized_NS.pkl")
     #df3 = pd.read_pickle("quickstats_optimized_EW.pkl")
@@ -453,10 +457,20 @@ if __name__ == "__main__":
 
     # plot_total_areas(df)
 
-    print(df[df["name"] == "2v2_50.50_50.50_1.1_53"]["palm_width"])
-    print(df[df["name"] == "2v2_50.50_50.50_1.1_53"])
-    print(df[df["name"] == "2v2_50.50_50.50_1.1_63"])
-    print(df[df["name"] == "2v2_50.50_50.50_1.1_73"])
+    # print(df[df["name"] == "2v2_50.50_50.50_1.1_53"]["palm_width"])
+    # print(df[df["name"] == "2v2_50.50_50.50_1.1_53"])
+    # print(df[df["name"] == "2v2_50.50_50.50_1.1_63"])
+    # print(df[df["name"] == "2v2_50.50_50.50_1.1_73"])
+
+    test_2v2 = df[df["type"] == "2v2"]
+    test_2v3 = df[df["type"] == "2v3"]
+    test_3v3 = df[df["type"] == "3v3"]
+    print("2v2 MAX", test_2v2["total_distance"].max())
+    print("2v2 MIN", test_2v2["total_distance"].min())
+    print("2v3 MAX", test_2v3["total_distance"].max())
+    print("2v3 MAX", test_2v3["total_distance"].min())
+    print("3v3 MAX", test_3v3["total_distance"].max())
+    print("3v3 MAX", test_3v3["total_distance"].min())
 
     #test1 = df[(df["type"] == "2v2") & (df["f1:f0"] == "1.0.9")]
     # print(test1)
@@ -507,7 +521,10 @@ if __name__ == "__main__":
     # print("3v3 MAX", test_3v3["total_distance"].max())
     # print("3v3 MAX", test_3v3["total_distance"].min())
     print("ASTERISK RERUN")
-    best, info = get_top_full_asterisk(df2)
+    #best, info = get_top_full_asterisk(df2)
+    # for i in best:
+    #plot_asterisk(paths2, i)
+
     print("ASTERISK ORIGINAL")
     best, info = get_top_full_asterisk(df)
 
@@ -519,10 +536,20 @@ if __name__ == "__main__":
     best, info = get_top_NS(df)
     print("NS RERUN")
     best, info = get_top_NS(df2)
+    print("BOTTOM ASTERISK")
     best, info = get_bottom_full_asterisk(df2)
     print("BOTTOM 2v2 Rerun")
     test_2v2 = df2[df2["type"] == "2v2"]
     get_bottom_full_asterisk(test_2v2)
+
+    print("ASTERISK RERUN")
+    best, info = get_top_full_asterisk(df2)
+    print("NS RERUN")
+    best, info = get_top_NS(df2)
+    print("EW RERUN")
+    best, info = get_top_EW(df2)
+    # for i in best:
+    #     plot_asterisk(paths2, i)
 
     # plot_total_distances_EW(df)
     #best, info = get_top_full_asterisk(df2)
@@ -539,9 +566,10 @@ if __name__ == "__main__":
     print(result)
     result.to_csv("chosen_hands.csv")
 
-    hand_1 = df2[df2["name"] == "3v3_45.30.25_40.30.30_0.9.1_53"]
-    hand_2 = df2[df2["name"] == "3v3_30.45.25_35.40.25_1.1_53"]
-    result = pd.concat([hand_1, hand_2])
+    hand_1 = df2[df2["name"] == "3v3_25.40.35_40.35.25_1.1_53"]
+    hand_2 = df2[df2["name"] == "3v3_45.25.30_35.25.40_1.1_73"]
+    hand_3 = df2[df2["name"] == "3v3_40.30.30_33.3.33.3.33.3_1.1_53"]
+    result = pd.concat([hand_1, hand_2, hand_3])
     print(result)
     #best, info = get_top_full_asterisk(df)
     # print(df.median()["total_distance"])

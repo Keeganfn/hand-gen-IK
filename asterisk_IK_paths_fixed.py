@@ -44,9 +44,9 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     # change color
 
     p.changeDynamics(hand_id, distal_f1_index, lateralFriction=1, rollingFriction=.03,
-                     mass=15)
+                     mass=5)
     p.changeDynamics(hand_id, distal_f2_index, lateralFriction=1, rollingFriction=0.03,
-                     mass=15)
+                     mass=5)
     p.changeVisualShape(hand_id, -1, rgbaColor=[0.3, 0.3, 0.3, 1])
     if len(ik_f1.finger_fk.link_ids) == 2:
         p.changeVisualShape(hand_id, 0, rgbaColor=[1, 0.5, 0, 1])
@@ -122,10 +122,10 @@ def get_hand_paths():
 
     paths = []
     names = []
-    for file in os.listdir(current_path + "/generated_2v2_1.1"):
-        print(str(file))
-        print(len(names))
-        temp_str = current_path + "/generated_2v2_1.1/" + str(file) + "/hand/" + str(file) + ".urdf"
+    for file in os.listdir(current_path + "/generated_hands"):
+        # print(str(file))
+        # print(len(names))
+        temp_str = current_path + "/generated_hands/" + str(file) + "/hand/" + str(file) + ".urdf"
         paths.append(temp_str)
         names.append(str(file))
 
@@ -134,9 +134,12 @@ def get_hand_paths():
     names.pop(-1)
     print(len(names))
 
-    with open(current_path + "/generated_2v2_1.1/hand_descriptions_batch_2v2_1.1.json", "r+") as fp:
+    with open(current_path + "/generated_hands/hand_descriptions_rerun_all.json", "r+") as fp:
         hand_descs = json.load(fp)
 
+    hand_descs = hand_descs[4256:]
+    print(hand_descs[0])
+    print(len(hand_descs))
     while len(hand_descs) <= len(names):
         hand_descs.append({"name": "dub"})
 
@@ -175,19 +178,20 @@ def run_batch():
         for j in range(len(directions)):
             # get paths for data and sim objects
             p.setGravity(0, 0, -10)
+            p.setPhysicsEngineParameter(contactBreakingThreshold=.001)
             # load objects into pybullet
             plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-            p.changeDynamics(plane_id, -1, lateralFriction=0)
+            p.changeDynamics(plane_id, -1, lateralFriction=.01, rollingFriction=0)
             # load hand
             hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
             # load cube
             cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-            p.changeDynamics(cube_id, -1, mass=10, restitution=.95, lateralFriction=1)
+            p.changeDynamics(cube_id, -1, mass=3, restitution=.95, lateralFriction=1)
             controller = asterisk_controller.AsteriskController(
                 hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
             controller.close_hand()
             controller.move_hand2(directions[j])
-            data_p = current_path + "/data_rerun3/" + trial_name
+            data_p = current_path + "/data_rerun4/" + trial_name
             if not os.path.exists(data_p):
                 os.makedirs(data_p)
             controller.save(trial_name, directions[j], data_p)
@@ -197,61 +201,64 @@ def run_batch():
 if __name__ == "__main__":
     # start pybullet
     # test()
-    # run_batch()
+    run_batch()
     # # get_hand_paths()
     # setup_sim()
-    physics_client = p.connect(p.GUI)
-    p.setAdditionalSearchPath(pybullet_data.getDataPath())
-    p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
-                                 cameraTargetPosition=[0, 0.1, 0.5])
+    # physics_client = p.connect(p.GUI)
+    # p.setAdditionalSearchPath(pybullet_data.getDataPath())
+    # p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
+    #                              cameraTargetPosition=[0, 0.1, 0.5])
 
-    directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    start = time.time()
-    for i in range(len(directions)):
-        p.setGravity(0, 0, -10)
-        p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
-                                     cameraTargetPosition=[0, 0.1, 0.5])
-        p.setPhysicsEngineParameter(contactBreakingThreshold=.001)
-        # load objects into pybullet
-        plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-        p.changeDynamics(plane_id, -1, lateralFriction=.01, rollingFriction=0)
-        # get paths for data and sim objects
-        current_path, hand_path, cube_path, data_path = get_paths()
-        # load hand
-        test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
-                     "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
-        test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
-            "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
-        test_hand3 = {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]},
-                      "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
-        test_hand4 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}, "finger2": {
-            "name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
-        test_hand5 = {"name": "3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540", "sim": {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, 0.072, 0], [
-            0, 0.036, 0], [0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.0576, 0], [0, 0.0504, 0], [0, 0.036, 0]]}}}
-        test_hand6 = {"name": "2v2_75.25_70.30_1.1_53", "sim": {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.10799999999999998, 0], [
-            0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, 0.1008, 0], [0, 0.043199999999999995, 0]]}}}
-        test_hand7 = {"name": "2v3_60.40_40.30.30_1.0.9_63", "sim": {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.08185263157894736, 0], [
-            0, 0.05456842105263158, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.06063157894736842, 0], [0, 0.04547368421052631, 0], [0, 0.04547368421052631, 0]]}}}
-        test_hand8 = {"name": "3v3_50.25.25_25.45.30_1.1_63", "sim": {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, 0.072, 0], [0, 0.036, 0], [
-            0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.036, 0], [0, 0.0648, 0], [0, 0.043199999999999995, 0]]}}}
+    # directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    # start = time.time()
+    # for i in range(len(directions)):
+    #     p.setGravity(0, 0, -10)
+    #     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
+    #                                  cameraTargetPosition=[0, 0.1, 0.5])
+    #     p.setPhysicsEngineParameter(contactBreakingThreshold=.001)
+    #     # load objects into pybullet
+    #     plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+    #     p.changeDynamics(plane_id, -1, lateralFriction=.01, rollingFriction=0)
+    #     # get paths for data and sim objects
+    #     current_path, hand_path, cube_path, data_path = get_paths()
+    #     # load hand
+    #     test_hand = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]},
+    #                  "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}}
+    #     test_hand2 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.05174999999999999, 0], [0, 0.09974999999999999, 0]]}, "finger2": {
+    #         "name": "finger1", "num_links": 2, "link_lengths": [[0, 0.09974999999999999, 0], [0, 0.05174999999999999, 0]]}}
+    #     test_hand3 = {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]},
+    #                   "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
+    #     test_hand4 = {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, .072, 0], [0, .072, 0]]}, "finger2": {
+    #         "name": "finger1", "num_links": 3, "link_lengths": [[0, .048, 0], [0, .048, 0], [0, .048, 0]]}}
+    #     test_hand5 = {"name": "3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540", "sim": {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, 0.072, 0], [
+    #         0, 0.036, 0], [0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.0576, 0], [0, 0.0504, 0], [0, 0.036, 0]]}}}
+    #     test_hand6 = {"name": "2v2_75.25_70.30_1.1_53", "sim": {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.10799999999999998, 0], [
+    #         0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 2, "link_lengths": [[0, 0.1008, 0], [0, 0.043199999999999995, 0]]}}}
+    #     test_hand7 = {"name": "2v3_60.40_40.30.30_1.0.9_63", "sim": {"finger1": {"name": "finger0", "num_links": 2, "link_lengths": [[0, 0.08185263157894736, 0], [
+    #         0, 0.05456842105263158, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.06063157894736842, 0], [0, 0.04547368421052631, 0], [0, 0.04547368421052631, 0]]}}}
+    #     test_hand8 = {"name": "3v3_50.25.25_25.45.30_1.1_63", "sim": {"finger1": {"name": "finger0", "num_links": 3, "link_lengths": [[0, 0.072, 0], [0, 0.036, 0], [
+    #         0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.036, 0], [0, 0.0648, 0], [0, 0.043199999999999995, 0]]}}}
 
-        hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand8["sim"], 1)
-        #hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
-        # load cube
-        cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+    #     hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand8["sim"], 1)
+    #     #hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
+    #     # load cube
+    #     cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
 
-        # time.sleep()
-        p.changeDynamics(cube_id, -1, restitution=.95, mass=10, lateralFriction=1)
-        p.changeVisualShape(cube_id, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
+    #     # time.sleep()
+    #     p.changeDynamics(cube_id, -1, restitution=.95, mass=3, lateralFriction=1)
+    #     p.changeVisualShape(cube_id, -1, rgbaColor=[0.5, 0.5, 0.5, 1])
 
-        controller = asterisk_controller.AsteriskController(
-            hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
-        controller.close_hand()
-        # controller.close_hand2()
-        controller.move_hand2(directions[i])
-        data_p = current_path + "/data_angles"
-        controller.save("2v2_1.1_1.1_1.1_1.1", directions[i], data_p)
-        p.resetSimulation()
+    #     controller = asterisk_controller.AsteriskController(
+    #         hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+    #     controller.close_hand()
+    #     # controller.close_hand2()
+    #     controller.move_hand2(directions[i])
+    #     data_p = current_path + "/data_angles/" + "test"
+    #     if not os.path.exists(data_p):
+    #         os.makedirs(data_p)
+
+    #     controller.save("test", directions[i], data_p)
+    #     p.resetSimulation()
 
     # print("END TIME", time.time() - start)
 
