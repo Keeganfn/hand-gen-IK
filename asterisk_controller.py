@@ -34,6 +34,18 @@ class AsteriskController():
         #     "SW": np.array([-0.165, -.0446]),
         #     "W": np.array([-0.165, .108]),
         #     "NW": np.array([-0.065, .158])}
+        offset = .01
+        self.start_positions = {
+            "MM": [0, 0],
+            "TT": [offset, offset],
+            "BB": [-offset, -offset],
+            "MT": [0, offset],
+            "TM": [offset, 0],
+            "MB": [0, -offset],
+            "BM": [-offset, 0],
+            "TB": [offset, -offset],
+            "BT": [-offset, offset],
+        }
 
         self.direction_dict = {
             "N": np.array([0.00, .2]),
@@ -139,6 +151,61 @@ class AsteriskController():
             [[0, 255, 0]],
             pointSize=10)
 
+    def close_hand2(self, debug=False, start="UU"):
+        # p.changeDynamics(self.hand_id, 0, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 1, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 2, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 3, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 4, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 5, maxJointVelocity=.1)
+        # p.changeDynamics(self.hand_id, 6, maxJointVelocity=.1)
+        target_f1 = np.array([0.0195, self.get_cube_position()[1] + self.start_positions[start][0]])
+        target_f2 = np.array([-0.0195, self.get_cube_position()[1] + self.start_positions[start][1]])
+
+        # target_f1_init = np.array([0.0495, self.get_cube_position()[1] + .01])
+        # target_f2_init = np.array([-0.0495, self.get_cube_position()[1] - .01])
+        # found, angles_f1, it = self.ik_f1.calculate_ik(
+        #     target_f1_init, ee_location=[-.011, self.ik_f1.finger_fk.original_ee_end[1]-.005, 1])
+        # found, angles_f2, it = self.ik_f2.calculate_ik(
+        #     target_f2_init, ee_location=[.011, self.ik_f2.finger_fk.original_ee_end[1]-.005, 1])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[0], angles_f1[0])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[1], angles_f1[1])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[2], angles_f1[2])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[0], angles_f2[0])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[1], angles_f2[1])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[2], angles_f2[2])
+
+        contact_point_info1 = None
+        contact_point_info2 = None
+        tsteps = 0
+        while tsteps < 1400:
+            start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
+            start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
+            sub_target_f1 = np.array(self.step_towards_goal_orig(start_f1, target_f1, .005))
+            sub_target_f2 = np.array(self.step_towards_goal_orig(start_f2, target_f2, .005))
+
+            if debug:
+                self.show_points_debug(sub_target_f1)
+                self.show_points_debug(sub_target_f2)
+
+            contact_point_info1 = p.getContactPoints(self.cube_id, self.hand_id, linkIndexB=self.distal_f1)
+            contact_point_info2 = p.getContactPoints(self.cube_id, self.hand_id, linkIndexB=self.distal_f2)
+            if contact_point_info1 and contact_point_info2:
+                break
+
+            if not contact_point_info1:
+                found, angles_f1, it = self.ik_f1.calculate_ik(
+                    sub_target_f1, ee_location=[-.011, self.ik_f1.finger_fk.original_ee_end[1]-.005, 1])
+                p.setJointMotorControlArray(
+                    self.hand_id, self.ik_f1.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f1)
+            if not contact_point_info2:
+                found, angles_f2, it = self.ik_f2.calculate_ik(
+                    sub_target_f2, ee_location=[.011, self.ik_f2.finger_fk.original_ee_end[1]-.005, 1])
+                p.setJointMotorControlArray(
+                    self.hand_id, self.ik_f2.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f2)
+            tsteps += 1
+            p.stepSimulation()
+
     def close_hand(self, debug=False):
         # p.changeDynamics(self.hand_id, 0, maxJointVelocity=.1)
         # p.changeDynamics(self.hand_id, 1, maxJointVelocity=.1)
@@ -147,9 +214,22 @@ class AsteriskController():
         # p.changeDynamics(self.hand_id, 4, maxJointVelocity=.1)
         # p.changeDynamics(self.hand_id, 5, maxJointVelocity=.1)
         # p.changeDynamics(self.hand_id, 6, maxJointVelocity=.1)
+        target_f1 = np.array([0.0195, self.get_cube_position()[1] + .01])
+        target_f2 = np.array([-0.0195, self.get_cube_position()[1] - .01])
 
-        target_f1 = np.array([0.0195, self.get_cube_position()[1] + 0])
-        target_f2 = np.array([-0.0195, self.get_cube_position()[1] + 0])
+        # target_f1_init = np.array([0.0495, self.get_cube_position()[1] + .01])
+        # target_f2_init = np.array([-0.0495, self.get_cube_position()[1] - .01])
+        # found, angles_f1, it = self.ik_f1.calculate_ik(
+        #     target_f1_init, ee_location=[-.011, self.ik_f1.finger_fk.original_ee_end[1]-.005, 1])
+        # found, angles_f2, it = self.ik_f2.calculate_ik(
+        #     target_f2_init, ee_location=[.011, self.ik_f2.finger_fk.original_ee_end[1]-.005, 1])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[0], angles_f1[0])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[1], angles_f1[1])
+        # p.resetJointState(self.hand_id, self.ik_f1.finger_fk.link_ids[2], angles_f1[2])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[0], angles_f2[0])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[1], angles_f2[1])
+        # p.resetJointState(self.hand_id, self.ik_f2.finger_fk.link_ids[2], angles_f2[2])
+
         contact_point_info1 = None
         contact_point_info2 = None
         tsteps = 0
@@ -217,9 +297,9 @@ class AsteriskController():
         # print(save_dict)
         self.trial_data.append(deepcopy(save_dict))
 
-    def save(self, name, direction, path):
+    def save(self, name, direction, start, path):
         # label = "data/" + direction + "_" + name + ".pkl"
-        label = path + "/" + direction + "_" + name + ".pkl"
+        label = path + "/" + direction + "_" + start + "_" + name + ".pkl"
 
         with open(label, "wb+") as file:
             pkl.dump(self.trial_data, file)
@@ -318,78 +398,3 @@ class AsteriskController():
             p.stepSimulation()
             # time.sleep(.5)
 #        print("CLOSE TIME", time.time() - start, tsteps)
-
-    def move_hand(self, direction, debug=False):
-        target_f1 = self.f1_direction_dict[direction]
-        target_f2 = self.f2_direction_dict[direction]
-
-        start = time.time()
-        tsteps = 0
-        cp1_count = 0
-        cp2_count = 0
-        cp3_count = 0
-        while tsteps < 1000:
-            start_f1 = self.ik_f1.finger_fk.calculate_forward_kinematics()
-            start_f2 = self.ik_f2.finger_fk.calculate_forward_kinematics()
-            sub_target_f1 = np.array(self.step_towards_goal(start_f1, target_f1, .003))
-            sub_target_f2 = np.array(self.step_towards_goal(start_f2, target_f2, .003))
-            if debug:
-                self.show_points_debug(sub_target_f1)
-                self.show_points_debug(sub_target_f2)
-
-            contact_point_info1 = p.getContactPoints(
-                bodyA=self.cube_id, bodyB=self.hand_id, linkIndexB=self.distal_f1)
-            contact_point_info2 = p.getContactPoints(
-                bodyA=self.cube_id, bodyB=self.hand_id, linkIndexB=self.distal_f2)
-            closest1 = p.getClosestPoints(self.hand_id, self.cube_id, .1, linkIndexA=1)
-            closest2 = p.getClosestPoints(self.hand_id, self.cube_id, .1, linkIndexA=3)
-            print(abs(closest[-1][6][0]) - abs(closest[-1][5][0]) + abs(closest[-1][6][1]) - abs(closest[-1][5][1]))
-
-            if np.allclose(start_f1[:2], target_f1, atol=5e-3) or np.allclose(start_f2[:2], target_f2, atol=5e-3):
-                print("Close enough here")
-                break
-
-            if not contact_point_info1 and not contact_point_info2:
-                print("LOST CONTACT")
-                break
-
-            if not contact_point_info1:
-                cp1_count += 1
-                if cp1_count > 30:
-                    print("BROKEN CONTACT 1")
-                    break
-
-            if not contact_point_info2:
-                cp2_count += 1
-                if cp2_count > 30:
-                    print("BROKEN CONTACT 2")
-                    break
-
-            if contact_point_info2:
-                # print("GOt HERE")
-
-                cp1_count = 0
-                t2 = mh.create_translation_matrix(contact_point_info2[-1][6])
-                f2 = mh.create_transformation_matrix(
-                    p.getLinkState(self.hand_id, 3)[0],
-                    p.getLinkState(self.hand_id, 3)[1])
-                cp2 = np.linalg.inv(f2) @ t2 @ [0, 0, 1]
-                found, angles_f2, it = self.ik_f2.calculate_ik(sub_target_f2, ee_location=cp2)
-                # print(self.ik_f2.finger_fk.link_ids)
-                p.setJointMotorControlArray(self.hand_id, self.ik_f2.finger_fk.link_ids,
-                                            p.POSITION_CONTROL, targetPositions=angles_f2)
-
-            if contact_point_info1:
-                p.getClosestPoints(self.hand_id, self.cube_id, 2, linkIndexA=3)
-                cp2_count = 0
-                t1 = mh.create_translation_matrix(contact_point_info1[-1][6])
-                f1 = mh.create_transformation_matrix(
-                    p.getLinkState(self.hand_id, 1)[0],
-                    p.getLinkState(self.hand_id, 1)[1])
-                cp1 = np.linalg.inv(f1) @ t1 @ [0, 0, 1]
-                found, angles_f1, it = self.ik_f1.calculate_ik(sub_target_f1, ee_location=cp1)
-                p.setJointMotorControlArray(self.hand_id, self.ik_f1.finger_fk.link_ids,
-                                            p.POSITION_CONTROL, targetPositions=angles_f1)
-            tsteps += 1
-            p.stepSimulation()
-#        print("CLOSE TIME", time.time() - start)

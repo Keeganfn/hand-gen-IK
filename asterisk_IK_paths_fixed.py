@@ -1,4 +1,5 @@
 from copy import deepcopy
+import sys
 import os
 import time
 import pybullet as p
@@ -43,9 +44,9 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     ik_f2.finger_fk.update_angles_from_sim()
     # change color
 
-    p.changeDynamics(hand_id, distal_f1_index, lateralFriction=1, rollingFriction=.03,
+    p.changeDynamics(hand_id, distal_f1_index, lateralFriction=1, rollingFriction=.04,
                      mass=5)
-    p.changeDynamics(hand_id, distal_f2_index, lateralFriction=1, rollingFriction=0.03,
+    p.changeDynamics(hand_id, distal_f2_index, lateralFriction=1, rollingFriction=0.04,
                      mass=5)
     p.changeVisualShape(hand_id, -1, rgbaColor=[0.3, 0.3, 0.3, 1])
     if len(ik_f1.finger_fk.link_ids) == 2:
@@ -93,9 +94,9 @@ def get_paths():
     hand_path5 = current_path+"/resources/2v2_Demo_short/hand/2v2_Demo.urdf"
     hand_path6 = current_path+"/resources/2v2_Demo_long/hand/2v2_Demo.urdf"
     hand_path7 = current_path+"/resources/2v2_Demo_elong/hand/2v2_Demo.urdf"
-    #hand_path8 = current_path+"/generated_hands/2v2_1.1_1.1_1.1_1.1/hand/2v2_1.1_1.1_1.1_1.1.urdf"
+    # hand_path8 = current_path+"/generated_hands/2v2_1.1_1.1_1.1_1.1/hand/2v2_1.1_1.1_1.1_1.1.urdf"
     hand_path8 = current_path+"/generated_2v2_1.1/2v2_50.50_50.50_1.1_63/hand/2v2_50.50_50.50_1.1_63.urdf"
-    #hand_path8 = current_path+"/generated_chosen/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540/hand/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540.urdf"
+    # hand_path8 = current_path+"/generated_chosen/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540/hand/3v3_50.0.25.0.25.0_40.0.35.0.25.0_1.1_540.urdf"
     hand_path9 = current_path+"/generated_2v2_1.1/2v2_75.25_70.30_1.1_53/hand/2v2_75.25_70.30_1.1_53.urdf"
     hand_path10 = current_path + "/generated_hands/2v3_60.40_40.30.30_1.0.9_63/hand/2v3_60.40_40.30.30_1.0.9_63.urdf"
     hand_path11 = current_path + "/generated_hands/3v3_50.25.25_25.45.30_1.1_63/hand/3v3_50.25.25_25.45.30_1.1_63.urdf"
@@ -119,6 +120,7 @@ def setup_sim():
 
 def get_hand_paths():
     current_path = str(pathlib.Path().resolve())
+    print(sys.argv[1], sys.argv[2])
 
     paths = []
     names = []
@@ -129,17 +131,28 @@ def get_hand_paths():
         paths.append(temp_str)
         names.append(str(file))
 
-    paths.pop(-1)
+    print(paths.pop(-1))
     print(len(names))
-    names.pop(-1)
+    print(names.pop(-1))
     print(len(names))
 
     with open(current_path + "/generated_hands/hand_descriptions_rerun_all.json", "r+") as fp:
         hand_descs = json.load(fp)
 
-    hand_descs = hand_descs[4256:]
     print(hand_descs[0])
     print(len(hand_descs))
+    total_num = len(hand_descs)
+    node_num = int(sys.argv[1]) - 1
+    total_nodes = int(sys.argv[2])
+    num_hands_run = math.ceil(total_num / total_nodes)
+    start = node_num * num_hands_run
+    end = start + num_hands_run
+    hand_descs = hand_descs[start:min(end+1, len(hand_descs)+1)]
+    print(hand_descs)
+    print(len(hand_descs))
+    print(start, end)
+    time.sleep(10)
+
     while len(hand_descs) <= len(names):
         hand_descs.append({"name": "dub"})
 
@@ -147,7 +160,7 @@ def get_hand_paths():
 
 
 def run_batch():
-    physics_client = p.connect(p.DIRECT)
+    physics_client = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
                                  cameraTargetPosition=[0, 0.1, 0.5])
@@ -157,6 +170,7 @@ def run_batch():
     old_hand = ""
     for i in range(len(hand_paths)):
         directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        start_positions = ["MM", "TT", "BB", "MT", "TM", "MB", "BM", "TB", "BT"]
         current_path, _, cube_path, data_path = get_paths()
         t = False
         for k in range(len(hand_descs)):
@@ -176,33 +190,36 @@ def run_batch():
         else:
             old_hand = trial_name
         for j in range(len(directions)):
-            # get paths for data and sim objects
-            p.setGravity(0, 0, -10)
-            p.setPhysicsEngineParameter(contactBreakingThreshold=.001)
-            # load objects into pybullet
-            plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-            p.changeDynamics(plane_id, -1, lateralFriction=.01, rollingFriction=0)
-            # load hand
-            hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
-            # load cube
-            cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-            p.changeDynamics(cube_id, -1, mass=3, restitution=.95, lateralFriction=1)
-            controller = asterisk_controller.AsteriskController(
-                hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
-            controller.close_hand()
-            controller.move_hand2(directions[j])
-            data_p = current_path + "/data_rerun4/" + trial_name
-            if not os.path.exists(data_p):
-                os.makedirs(data_p)
-            controller.save(trial_name, directions[j], data_p)
-            p.resetSimulation()
+            for start in start_positions:
+                # get paths for data and sim objects
+                p.setGravity(0, 0, -10)
+                p.setPhysicsEngineParameter(contactBreakingThreshold=.001)
+                # load objects into pybullet
+                plane_id = p.loadURDF("plane.urdf", flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+                p.changeDynamics(plane_id, -1, lateralFriction=.01, rollingFriction=0)
+                # load hand
+                hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
+                # load cube
+                cube_id = p.loadURDF(
+                    cube_path, basePosition=[0.0, 0.1067, .05],
+                    flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
+                p.changeDynamics(cube_id, -1, mass=3, restitution=.95, lateralFriction=1)
+                controller = asterisk_controller.AsteriskController(
+                    hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
+                controller.close_hand2(start=start)
+                controller.move_hand2(directions[j])
+                data_p = current_path + "/data_test/" + trial_name
+                if not os.path.exists(data_p):
+                    os.makedirs(data_p)
+                controller.save(trial_name, directions[j], start, data_p)
+                p.resetSimulation()
 
 
 if __name__ == "__main__":
     # start pybullet
     # test()
     run_batch()
-    # # get_hand_paths()
+    # get_hand_paths()
     # setup_sim()
     # physics_client = p.connect(p.GUI)
     # p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -240,7 +257,7 @@ if __name__ == "__main__":
     #         0, 0.036, 0]]}, "finger2": {"name": "finger1", "num_links": 3, "link_lengths": [[0, 0.036, 0], [0, 0.0648, 0], [0, 0.043199999999999995, 0]]}}}
 
     #     hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand8["sim"], 1)
-    #     #hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
+    #     # hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index = setup_hand(hand_path, test_hand, 1)
     #     # load cube
     #     cube_id = p.loadURDF(cube_path, basePosition=[0.0, 0.1067, .05], flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
 
