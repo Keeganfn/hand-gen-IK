@@ -261,7 +261,7 @@ class AsteriskController():
             tsteps += 1
             p.stepSimulation()
 
-    def record(self, ik_angles, d1, d2):
+    def record(self, ik_angles, d1, d2, cp1, cp2):
         temp = self.ik_f1.finger_fk.current_angles + self.ik_f2.finger_fk.current_angles
         j0 = temp[0]
         j1 = temp[1]
@@ -287,6 +287,8 @@ class AsteriskController():
             "ik_angles": ik_angles,
             "d1": d1,
             "d2": d2,
+            "cp1": deepcopy(cp1),
+            "cp2": deepcopy(cp2),
             "joint_1": j0,
             "joint_2": j1,
             "joint_3": j2,
@@ -394,7 +396,9 @@ class AsteriskController():
                                             p.POSITION_CONTROL, targetPositions=angles_f1)
             tsteps += 1
 
-            self.record(angles_f1+angles_f2, d1, d2)
+            contact_point_info1 = p.getContactPoints(bodyA=self.hand_id, bodyB=self.cube_id, linkIndexA=self.distal_f1)
+            contact_point_info2 = p.getContactPoints(bodyA=self.hand_id, bodyB=self.cube_id, linkIndexA=self.distal_f2)
+            self.record(angles_f1+angles_f2, d1, d2, contact_point_info1, contact_point_info2)
             p.stepSimulation()
             # time.sleep(.5)
 #        print("CLOSE TIME", time.time() - start, tsteps)

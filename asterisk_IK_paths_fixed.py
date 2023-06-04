@@ -12,12 +12,6 @@ import pathlib
 import forward_kinematics
 import jacobian_IK
 import asterisk_controller
-from mojograsp.simcore.sim_manager import SimManagerDefault
-from mojograsp.simcore.state import StateDefault
-from mojograsp.simcore.reward import RewardDefault
-from mojograsp.simcore.record_data import RecordDataJSON
-from mojograsp.simobjects.two_finger_gripper import TwoFingerGripper
-from mojograsp.simobjects.object_base import ObjectBase
 
 
 def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
@@ -131,12 +125,12 @@ def get_hand_paths():
         paths.append(temp_str)
         names.append(str(file))
 
-    print(paths.pop(-1))
+    #print(paths.pop(-1))
     print(len(names))
-    print(names.pop(-1))
+    #print(names.pop(-1))
     print(len(names))
 
-    with open(current_path + "/generated_hands/hand_descriptions_rerun_all.json", "r+") as fp:
+    with open(current_path + "/hand_descriptions_rerun_all.json", "r+") as fp:
         hand_descs = json.load(fp)
 
     print(hand_descs[0])
@@ -147,11 +141,11 @@ def get_hand_paths():
     num_hands_run = math.ceil(total_num / total_nodes)
     start = node_num * num_hands_run
     end = start + num_hands_run
-    hand_descs = hand_descs[start:min(end+1, len(hand_descs)+1)]
+    hand_descs = hand_descs[start:min(end, len(hand_descs))]
     print(hand_descs)
     print(len(hand_descs))
     print(start, end)
-    time.sleep(10)
+    time.sleep(3)
 
     while len(hand_descs) <= len(names):
         hand_descs.append({"name": "dub"})
@@ -160,7 +154,7 @@ def get_hand_paths():
 
 
 def run_batch():
-    physics_client = p.connect(p.GUI)
+    physics_client = p.connect(p.DIRECT)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
                                  cameraTargetPosition=[0, 0.1, 0.5])
@@ -208,7 +202,7 @@ def run_batch():
                     hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
                 controller.close_hand2(start=start)
                 controller.move_hand2(directions[j])
-                data_p = current_path + "/data_test/" + trial_name
+                data_p = current_path + "/data_starting_positions/" + trial_name
                 if not os.path.exists(data_p):
                     os.makedirs(data_p)
                 controller.save(trial_name, directions[j], start, data_p)
