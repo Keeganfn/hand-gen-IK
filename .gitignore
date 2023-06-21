@@ -24,3 +24,4 @@ data_angles/test/
 data_rerun4/
 *.zip
 *.pkl
+*.tar
