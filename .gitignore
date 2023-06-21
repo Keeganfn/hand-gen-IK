@@ -22,3 +22,5 @@ quickstats_rerun3.pkl
 data.zip
 data_angles/test/
 data_rerun4/
+*.zip
+*.pkl

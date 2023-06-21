@@ -38,42 +38,43 @@ def setup_hand(hand_path, hand_info, start_angle=.5, x=0):
     ik_f2.finger_fk.update_angles_from_sim()
     # change color
 
+    mass_link = .036
     p.changeDynamics(hand_id, distal_f1_index, lateralFriction=1, rollingFriction=.04,
-                     mass=5)
+                     mass=.036)
     p.changeDynamics(hand_id, distal_f2_index, lateralFriction=1, rollingFriction=0.04,
-                     mass=5)
+                     mass=.036)
     p.changeVisualShape(hand_id, -1, rgbaColor=[0.3, 0.3, 0.3, 1])
     if len(ik_f1.finger_fk.link_ids) == 2:
         p.changeVisualShape(hand_id, 0, rgbaColor=[1, 0.5, 0, 1])
         p.changeVisualShape(hand_id, 1, rgbaColor=[0.3, 0.3, 0.3, 1])
-        p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.57)
-        p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=2.09)
+        p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=2.09, mass=mass_link)
     if len(ik_f1.finger_fk.link_ids) == 3:
         p.changeVisualShape(hand_id, 0, rgbaColor=[1, 0.5, 0, 1])
         p.changeVisualShape(hand_id, 1, rgbaColor=[0.3, 0.3, 0.3, 1])
         p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
-        p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.57)
-        p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=2.09)
-        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=2.09)
+        p.changeDynamics(hand_id, 0, jointLowerLimit=-1.57, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 1, jointLowerLimit=-1.57, jointUpperLimit=2.09, mass=mass_link)
+        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=2.09, mass=mass_link)
     if len(ik_f2.finger_fk.link_ids) == 2:
         p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
         p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
-        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=1.57)
-        p.changeDynamics(hand_id, 3, jointLowerLimit=-2.09, jointUpperLimit=1.57)
+        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 3, jointLowerLimit=-2.09, jointUpperLimit=1.57, mass=mass_link)
     if len(ik_f2.finger_fk.link_ids) == 3:
         p.changeVisualShape(hand_id, 3, rgbaColor=[1, 0.5, 0, 1])
         p.changeVisualShape(hand_id, 4, rgbaColor=[0.3, 0.3, 0.3, 1])
         p.changeVisualShape(hand_id, 5, rgbaColor=[1, 0.5, 0, 1])
-        p.changeDynamics(hand_id, 3, jointLowerLimit=-1.57, jointUpperLimit=1.57)
-        p.changeDynamics(hand_id, 4, jointLowerLimit=-2.09, jointUpperLimit=1.57)
-        p.changeDynamics(hand_id, 5, jointLowerLimit=-2.09, jointUpperLimit=1.57)
+        p.changeDynamics(hand_id, 3, jointLowerLimit=-1.57, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 4, jointLowerLimit=-2.09, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 5, jointLowerLimit=-2.09, jointUpperLimit=1.57, mass=mass_link)
     if len(ik_f2.finger_fk.link_ids) == 3 and len(ik_f1.finger_fk.link_ids) == 2:
         p.changeVisualShape(hand_id, 2, rgbaColor=[1, 0.5, 0, 1])
         p.changeVisualShape(hand_id, 3, rgbaColor=[0.3, 0.3, 0.3, 1])
         p.changeVisualShape(hand_id, 4, rgbaColor=[1, 0.5, 0, 1])
-        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=1.57, jointLimitForce=.05)
-        p.changeDynamics(hand_id, 3, jointLowerLimit=-2.09, jointUpperLimit=1.57, jointLimitForce=.05)
-        p.changeDynamics(hand_id, 4, jointLowerLimit=-2.09, jointUpperLimit=1.57, jointLimitForce=.05)
+        p.changeDynamics(hand_id, 2, jointLowerLimit=-1.57, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 3, jointLowerLimit=-2.09, jointUpperLimit=1.57, mass=mass_link)
+        p.changeDynamics(hand_id, 4, jointLowerLimit=-2.09, jointUpperLimit=1.57, mass=mass_link)
 
     return hand_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index
 
@@ -130,7 +131,7 @@ def get_hand_paths():
     #print(names.pop(-1))
     print(len(names))
 
-    with open(current_path + "/hand_descriptions_rerun_all.json", "r+") as fp:
+    with open(current_path + "/generated_hands/2v2_description.json", "r+") as fp:
         hand_descs = json.load(fp)
 
     print(hand_descs[0])
@@ -154,7 +155,7 @@ def get_hand_paths():
 
 
 def run_batch():
-    physics_client = p.connect(p.DIRECT)
+    physics_client = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.resetDebugVisualizerCamera(cameraDistance=.02, cameraYaw=0, cameraPitch=-89.9999,
                                  cameraTargetPosition=[0, 0.1, 0.5])
@@ -164,7 +165,8 @@ def run_batch():
     old_hand = ""
     for i in range(len(hand_paths)):
         directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-        start_positions = ["MM", "TT", "BB", "MT", "TM", "MB", "BM", "TB", "BT"]
+        #start_positions = ["MM", "TT", "BB", "MT", "TM", "MB", "BM", "TB", "BT"]
+        start_positions = ["MM"]
         current_path, _, cube_path, data_path = get_paths()
         t = False
         for k in range(len(hand_descs)):
@@ -197,7 +199,7 @@ def run_batch():
                 cube_id = p.loadURDF(
                     cube_path, basePosition=[0.0, 0.1067, .05],
                     flags=p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES)
-                p.changeDynamics(cube_id, -1, mass=3, restitution=.95, lateralFriction=1)
+                p.changeDynamics(cube_id, -1, mass=.03, restitution=.95, lateralFriction=1)
                 controller = asterisk_controller.AsteriskController(
                     hand_id, cube_id, ik_f1, ik_f2, distal_f1_index, distal_f2_index)
                 controller.close_hand2(start=start)

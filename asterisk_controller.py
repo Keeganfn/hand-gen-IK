@@ -197,12 +197,12 @@ class AsteriskController():
                 found, angles_f1, it = self.ik_f1.calculate_ik(
                     sub_target_f1, ee_location=[-.011, self.ik_f1.finger_fk.original_ee_end[1]-.005, 1])
                 p.setJointMotorControlArray(
-                    self.hand_id, self.ik_f1.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f1)
+                    self.hand_id, self.ik_f1.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f1, forces=[.4]*self.ik_f1.finger_fk.num_links)
             if not contact_point_info2:
                 found, angles_f2, it = self.ik_f2.calculate_ik(
                     sub_target_f2, ee_location=[.011, self.ik_f2.finger_fk.original_ee_end[1]-.005, 1])
                 p.setJointMotorControlArray(
-                    self.hand_id, self.ik_f2.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f2)
+                    self.hand_id, self.ik_f2.finger_fk.link_ids, p.POSITION_CONTROL, targetPositions=angles_f2, forces=[.4]*self.ik_f2.finger_fk.num_links)
             tsteps += 1
             p.stepSimulation()
 
@@ -380,7 +380,7 @@ class AsteriskController():
                     break
                 # print(self.ik_f2.finger_fk.link_ids)
                 p.setJointMotorControlArray(self.hand_id, self.ik_f2.finger_fk.link_ids,
-                                            p.POSITION_CONTROL, targetPositions=angles_f2)
+                                            p.POSITION_CONTROL, targetPositions=angles_f2,forces=[.3]*self.ik_f2.finger_fk.num_links)
 
             if contact_point_info1:
                 cp2_count = 0
@@ -393,7 +393,7 @@ class AsteriskController():
                 if not angles_f1:
                     break
                 p.setJointMotorControlArray(self.hand_id, self.ik_f1.finger_fk.link_ids,
-                                            p.POSITION_CONTROL, targetPositions=angles_f1)
+                                            p.POSITION_CONTROL, targetPositions=angles_f1,forces=[.3]*self.ik_f1.finger_fk.num_links )
             tsteps += 1
 
             contact_point_info1 = p.getContactPoints(bodyA=self.hand_id, bodyB=self.cube_id, linkIndexA=self.distal_f1)
